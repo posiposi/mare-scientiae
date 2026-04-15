@@ -6,34 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 過去に読んだ書籍の傾向から次の一冊をおすすめするJSON API。フロントエンドは持たず、curlまたはCLIで実行する。Claude APIを利用してレコメンドロジックを実装する。最終的にはAWS Lambda上でのサーバレス実行を目指す。
 
-## ビルド・テスト
+## ビルド・静的解析
+
+すべてのコマンドは `api` コンテナ内で実行する。
 
 ```bash
 # ビルド
-go build ./...
-
-# テスト全実行
-go test ./...
-
-# 単一パッケージのテスト
-go test ./internal/domain/book/
-
-# 特定テスト関数の実行
-go test ./internal/domain/book/ -run TestBookEntity
-
-# テスト（カバレッジ付き）
-go test -cover ./...
+docker compose exec api go build ./...
 
 # フォーマット
-gofmt -w .
+docker compose exec api gofmt -w .
 
 # vet
-go vet ./...
+docker compose exec api go vet ./...
 ```
+
+テスト実行は `test-runner` エージェントが `api` コンテナ内で行う。ローカルでの `go test` は使用しない。
 
 ## アーキテクチャ
 
-DDD（ドメイン駆動設計）のレイヤードアーキテクチャを採用。TDDで実装する。
+DDD（ドメイン駆動設計）のレイヤードアーキテクチャを採用。実装は必ずTDD（テスト駆動開発）で行う。`/tdd-workflow` スキルを使用してRed→Green→Refactoringのサイクルに従うこと。
 
 ```
 cmd/
