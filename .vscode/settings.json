@@ -1,0 +1,6 @@
+{
+  "go.formatTool": "gofmt",
+  "go.lintOnSave": "workspace",
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast"]
+}
