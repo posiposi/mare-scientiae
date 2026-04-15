@@ -57,17 +57,18 @@ docker-compose で以下の4サービスを構成する。
 | サービス | イメージ | 役割 |
 |---|---|---|
 | api | 自前ビルド（Go） | アプリケーション本体 |
-| db | postgres:16 | 開発用データベース |
-| test-db | postgres:16 | テスト用データベース（TDDで使用） |
-| atlas | arigaio/atlas | スキーマ管理・マイグレーション |
+| db | postgres:18.3 | 開発用データベース |
+| test-db | postgres:18.3 | テスト用データベース（TDDで使用） |
+| atlas | arigaio/atlas | スキーマ管理（宣言的ワークフロー） |
 
 ## スキーマ管理
 
-Atlas（宣言的スキーマ管理）を採用。スキーマ定義ファイルは `atlas/` ディレクトリに配置する。
+Atlas（宣言的スキーマ管理）を採用。Go公式レイアウトに従い、非Goファイルはプロジェクトルートに配置する。
 
 ```
-atlas/
-  atlas.hcl          … Atlas プロジェクト設定
-  schema.hcl         … スキーマ宣言（テーブル定義）
-  migrations/        … atlas migrate diff で生成されるマイグレーションファイル
+atlas.hcl              … Atlas プロジェクト設定
+schemas/               … スキーマ宣言（テーブル定義）
+  db/
+    db.my.hcl     … データベース定義
+    tables/            … テーブル定義
 ```
