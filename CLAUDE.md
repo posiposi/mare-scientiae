@@ -46,12 +46,12 @@ domain層は外部パッケージに一切依存しない。infrastructure層は
 
 docker-compose で以下の4サービスを構成する。
 
-| サービス | イメージ | 役割 |
-|---|---|---|
-| api | 自前ビルド（Go） | アプリケーション本体 |
-| db | postgres:18.3 | 開発用データベース |
-| test-db | postgres:18.3 | テスト用データベース（TDDで使用） |
-| atlas | arigaio/atlas:1.2.0 | スキーマ管理（宣言的ワークフロー） |
+| サービス | イメージ            | 役割                               |
+| -------- | ------------------- | ---------------------------------- |
+| api      | 自前ビルド（Go）    | アプリケーション本体               |
+| db       | postgres:18.3       | 開発用データベース                 |
+| test-db  | postgres:18.3       | テスト用データベース（TDDで使用）  |
+| atlas    | arigaio/atlas:1.2.0 | スキーマ管理（宣言的ワークフロー） |
 
 ## スキーマ管理
 
@@ -105,13 +105,13 @@ docker compose run --rm atlas schema apply --env local --auto-approve
 - `code-simplifier` プラグインを使用してコードの簡潔さ・可読性を維持する
 - `security-guideline` プラグインに準拠し、セキュリティを考慮した実装を行う
 
-### 4. レビュー
-
-- `code-review` コマンドを使用してコードレビューを実施する
-- レビューで指摘された項目をユーザーに提示し、修正が必要な箇所の指示を受ける
-- 修正は実装と同様にTDD（`/tdd-workflow`）で行う
-
-### 5. PR作成
+### 4. PR作成
 
 - PR作成前のコードpushはユーザーの承認を得てから実行する
 - `/commit-commands:commit-push-pr` を使用してPR作成を行う
+
+### 5. レビュー
+
+- `/code-review:code-review` プラグインを使用してコードレビューを実施する
+- レビューで指摘された項目をユーザーに提示し、修正が必要な箇所の指示を受ける
+- 修正は実装と同様にTDD（`/tdd-workflow`）で行う
