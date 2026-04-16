@@ -74,3 +74,41 @@ docker compose run --rm atlas schema apply --env local --dry-run
 # スキーマ適用
 docker compose run --rm atlas schema apply --env local --auto-approve
 ```
+
+## 開発フロー
+
+以下の手順に従って開発を進める。
+
+### 1. Issue取得
+
+- ユーザーが指定したIssue番号からGitHub Issuesを取得する
+- GitHubへのアクセスはMCPサーバー（`mcp__github`）を使用する
+
+### 2. 設計
+
+- Plan modeを使用して仕様設計を行う
+- サブエージェントを利用し、以下の観点を並列で設計する
+  - フロントエンド
+  - バックエンド
+  - インフラ
+  - その他（横断的関心事など）
+- 設計完了後、ユーザーに内容を提示し承認を得てから次のステップへ進む
+
+### 3. 実装
+
+- `/tdd-workflow` スキルを読み込み、Red→Green→Refactoringのサイクルで実装する
+- コミット時は `/commit-commands:commit` を使用する
+- フロントエンド・バックエンド等を並行して実装できる場合はサブエージェントで並列実装する
+- `code-simplifier` プラグインを使用してコードの簡潔さ・可読性を維持する
+- `security-guideline` プラグインに準拠し、セキュリティを考慮した実装を行う
+
+### 4. レビュー
+
+- `code-review` コマンドを使用してコードレビューを実施する
+- レビューで指摘された項目をユーザーに提示し、修正が必要な箇所の指示を受ける
+- 修正は実装と同様にTDD（`/tdd-workflow`）で行う
+
+### 5. PR作成
+
+- PR作成前のコードpushはユーザーの承認を得てから実行する
+- `/commit-commands:commit-push-pr` を使用してPR作成を行う
