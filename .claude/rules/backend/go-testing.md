@@ -39,7 +39,7 @@ for _, tt := range tests {
 
 ## `t.Error` vs `t.Fatal`
 
-- `t.Error` / `t.Errorf`: テスト継続可能な失敗に使用する。テーブル駆動テストのループ内では `continue` と組み合わせる
+- `t.Error` / `t.Errorf`: テスト継続可能な失敗に使用する
 - `t.Fatal` / `t.Fatalf`: セットアップの失敗や、後続チェックが無意味な場合のみ使用する
 - 別 goroutine からの fatal 呼び出しは禁止
 
