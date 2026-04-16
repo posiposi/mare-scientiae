@@ -18,6 +18,7 @@ var (
 	ErrBookGoogleBooksIDTooLong  = errors.New("book: google_books_id must be 50 characters or less")
 	ErrBookTitleTooLong          = errors.New("book: title must be 500 characters or less")
 	ErrBookSubtitleTooLong       = errors.New("book: subtitle must be 500 characters or less")
+	ErrBookSubtitleEmpty         = errors.New("book: subtitle must not be empty, use nil instead")
 )
 
 type Book struct {
@@ -49,8 +50,13 @@ func NewBook(id, googleBooksID, title string, subtitle *string, authors []string
 	if len([]rune(title)) > 500 {
 		return nil, ErrBookTitleTooLong
 	}
-	if subtitle != nil && len([]rune(*subtitle)) > 500 {
-		return nil, ErrBookSubtitleTooLong
+	if subtitle != nil {
+		if *subtitle == "" {
+			return nil, ErrBookSubtitleEmpty
+		}
+		if len([]rune(*subtitle)) > 500 {
+			return nil, ErrBookSubtitleTooLong
+		}
 	}
 	if len(authors) == 0 {
 		return nil, ErrBookAuthorsRequired

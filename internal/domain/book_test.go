@@ -145,6 +145,19 @@ func TestNewBook_異常系_Authorsが空またはnil(t *testing.T) {
 	}
 }
 
+func TestNewBook_異常系_Subtitleが空文字(t *testing.T) {
+	now := time.Now()
+
+	_, err := NewBook("550e8400-e29b-41d4-a716-446655440000", "googleId123", "タイトル", strPtr(""), []string{"著者A"}, now, now)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !errors.Is(err, ErrBookSubtitleEmpty) {
+		t.Errorf("expected ErrBookSubtitleEmpty, got %v", err)
+	}
+}
+
 func TestNewBook_異常系_Authors内に空文字要素(t *testing.T) {
 	now := time.Now()
 
