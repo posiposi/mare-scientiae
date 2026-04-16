@@ -7,6 +7,8 @@ var (
 	ErrGoogleBooksIDTooLong  = errors.New("google books id: id must be 50 characters or less")
 )
 
+const googleBooksIDMaxLen = 50
+
 type GoogleBooksID struct {
 	value string
 }
@@ -15,7 +17,7 @@ func NewGoogleBooksID(v string) (GoogleBooksID, error) {
 	if v == "" {
 		return GoogleBooksID{}, ErrGoogleBooksIDRequired
 	}
-	if len([]rune(v)) > 50 {
+	if len([]rune(v)) > googleBooksIDMaxLen {
 		return GoogleBooksID{}, ErrGoogleBooksIDTooLong
 	}
 	return GoogleBooksID{value: v}, nil

@@ -7,6 +7,8 @@ var (
 	ErrBookTitleTooLong  = errors.New("book title: title must be 500 characters or less")
 )
 
+const bookTitleMaxLen = 500
+
 type BookTitle struct {
 	value string
 }
@@ -15,7 +17,7 @@ func NewBookTitle(v string) (BookTitle, error) {
 	if v == "" {
 		return BookTitle{}, ErrBookTitleRequired
 	}
-	if len([]rune(v)) > 500 {
+	if len([]rune(v)) > bookTitleMaxLen {
 		return BookTitle{}, ErrBookTitleTooLong
 	}
 	return BookTitle{value: v}, nil

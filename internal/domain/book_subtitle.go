@@ -7,6 +7,8 @@ var (
 	ErrBookSubtitleTooLong = errors.New("book subtitle: subtitle must be 500 characters or less")
 )
 
+const bookSubtitleMaxLen = 500
+
 type BookSubtitle struct {
 	value string
 }
@@ -15,7 +17,7 @@ func NewBookSubtitle(v string) (BookSubtitle, error) {
 	if v == "" {
 		return BookSubtitle{}, ErrBookSubtitleEmpty
 	}
-	if len([]rune(v)) > 500 {
+	if len([]rune(v)) > bookSubtitleMaxLen {
 		return BookSubtitle{}, ErrBookSubtitleTooLong
 	}
 	return BookSubtitle{value: v}, nil
