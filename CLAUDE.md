@@ -51,16 +51,26 @@ docker-compose で以下の4サービスを構成する。
 | api | 自前ビルド（Go） | アプリケーション本体 |
 | db | postgres:18.3 | 開発用データベース |
 | test-db | postgres:18.3 | テスト用データベース（TDDで使用） |
-| atlas | arigaio/atlas | スキーマ管理（宣言的ワークフロー） |
+| atlas | arigaio/atlas:1.2.0 | スキーマ管理（宣言的ワークフロー） |
 
 ## スキーマ管理
 
-Atlas（宣言的スキーマ管理）を採用。Go公式レイアウトに従い、非Goファイルはプロジェクトルートに配置する。
+Atlas（宣言的スキーマ管理）を採用。Go公式レイアウトに従い、非Goファイルはプロジェクトルートに配置する。スキーマ適用は `/schema-apply` スキルを使用すること。
 
 ```
-atlas.hcl              … Atlas プロジェクト設定
+atlas.hcl              … Atlas プロジェクト設定（srcは配列で複数ディレクトリを指定）
 schemas/               … スキーマ宣言（テーブル定義）
   db/
     schema.hcl         … データベース定義（publicスキーマ）
-    tables/            … テーブル定義
+    tables/            … テーブル定義（*.pg.hcl）
+```
+
+テーブル定義ファイルは `schemas/db/tables/` に `<テーブル名>.pg.hcl` の命名規則で配置する。Atlasはディレクトリを再帰的にスキャンしないため、`atlas.hcl` の `src` に `schemas/db` と `schemas/db/tables` の両方を配列で指定している。
+
+```bash
+# スキーマ適用（dry-run）
+docker compose run --rm atlas schema apply --env local --dry-run
+
+# スキーマ適用
+docker compose run --rm atlas schema apply --env local --auto-approve
 ```
