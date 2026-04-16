@@ -16,6 +16,9 @@ locals {
 }
 
 env "local" {
-  src = "file://schemas/db"
+  src = [
+    "file://schemas/db",
+    "file://schemas/db/tables",
+  ]
   url = local.postgres_url.local
 }
