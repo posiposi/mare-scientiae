@@ -83,6 +83,8 @@ docker compose run --rm atlas schema apply --env local --auto-approve
 
 - ユーザーが指定したIssue番号からGitHub Issuesを取得する
 - GitHubへのアクセスはMCPサーバー（`mcp__github`）を使用する
+- `main`ブランチから、Issue番号とタイトルに適した英語名で作業ブランチを作成する
+  - 例: `git switch -c "#1_fix_bugs"`
 
 ### 2. 設計
 
