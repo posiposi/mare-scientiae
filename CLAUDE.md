@@ -97,6 +97,7 @@ docker compose run --rm atlas schema apply --env local --auto-approve
 ### 3. 実装
 
 - `/tdd-workflow` スキルを読み込み、Red→Green→Refactoringのサイクルで実装する
+- コミット前に `gofmt -w .` および `go vet ./...` を `api` コンテナ内で実行し、フォーマットと静的解析を通すこと
 - コミット時は `/commit-commands:commit` を使用する
 - フロントエンド・バックエンド等を並行して実装できる場合はサブエージェントで並列実装する
 - `code-simplifier` プラグインを使用してコードの簡潔さ・可読性を維持する
