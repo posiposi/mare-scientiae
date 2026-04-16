@@ -1,7 +1,6 @@
 ---
 name: tdd-workflow
 description: TDDワークフロー。機能実装時にRed→Green→Refactoringの3フェーズで開発を進める。テスト駆動開発、TDD、テストファーストに関するタスクで使用する。
-disable-model-invocation: true
 ---
 
 # TDD Workflow
