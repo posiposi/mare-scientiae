@@ -5,15 +5,66 @@ import (
 	"time"
 )
 
+func newTestBookID(t *testing.T, v string) BookID {
+	t.Helper()
+	id, err := NewBookID(v)
+	if err != nil {
+		t.Fatalf("NewBookID(%q) unexpected error: %v", v, err)
+	}
+	return id
+}
+
+func newTestGoogleBooksID(t *testing.T, v string) GoogleBooksID {
+	t.Helper()
+	gid, err := NewGoogleBooksID(v)
+	if err != nil {
+		t.Fatalf("NewGoogleBooksID(%q) unexpected error: %v", v, err)
+	}
+	return gid
+}
+
+func newTestBookTitle(t *testing.T, v string) BookTitle {
+	t.Helper()
+	title, err := NewBookTitle(v)
+	if err != nil {
+		t.Fatalf("NewBookTitle(%q) unexpected error: %v", v, err)
+	}
+	return title
+}
+
+func newTestBookSubtitle(t *testing.T, v string) BookSubtitle {
+	t.Helper()
+	subtitle, err := NewBookSubtitle(v)
+	if err != nil {
+		t.Fatalf("NewBookSubtitle(%q) unexpected error: %v", v, err)
+	}
+	return subtitle
+}
+
+func newTestAuthors(t *testing.T, names ...string) Authors {
+	t.Helper()
+	var authorList []Author
+	for _, name := range names {
+		a, err := NewAuthor(name)
+		if err != nil {
+			t.Fatalf("NewAuthor(%q) unexpected error: %v", name, err)
+		}
+		authorList = append(authorList, a)
+	}
+	authors, err := NewAuthors(authorList)
+	if err != nil {
+		t.Fatalf("NewAuthors() unexpected error: %v", err)
+	}
+	return authors
+}
+
 func TestNewBook_正常系_全フィールド指定(t *testing.T) {
 	now := time.Now()
-	id, _ := NewBookID("550e8400-e29b-41d4-a716-446655440000")
-	gid, _ := NewGoogleBooksID("googleId123")
-	title, _ := NewBookTitle("テストタイトル")
-	subtitle, _ := NewBookSubtitle("副題テスト")
-	authorA, _ := NewAuthor("著者A")
-	authorB, _ := NewAuthor("著者B")
-	authors, _ := NewAuthors([]Author{authorA, authorB})
+	id := newTestBookID(t, "550e8400-e29b-41d4-a716-446655440000")
+	gid := newTestGoogleBooksID(t, "googleId123")
+	title := newTestBookTitle(t, "テストタイトル")
+	subtitle := newTestBookSubtitle(t, "副題テスト")
+	authors := newTestAuthors(t, "著者A", "著者B")
 
 	book := NewBook(id, gid, title, &subtitle, authors, now, now)
 
@@ -35,6 +86,9 @@ func TestNewBook_正常系_全フィールド指定(t *testing.T) {
 	if book.Authors.Values()[0].String() != "著者A" {
 		t.Errorf("NewBook().Authors[0].String() = %q, want %q", book.Authors.Values()[0].String(), "著者A")
 	}
+	if book.Authors.Values()[1].String() != "著者B" {
+		t.Errorf("NewBook().Authors[1].String() = %q, want %q", book.Authors.Values()[1].String(), "著者B")
+	}
 	if !book.CreatedAt.Equal(now) {
 		t.Errorf("NewBook().CreatedAt = %v, want %v", book.CreatedAt, now)
 	}
@@ -45,11 +99,10 @@ func TestNewBook_正常系_全フィールド指定(t *testing.T) {
 
 func TestNewBook_正常系_Subtitleがnil(t *testing.T) {
 	now := time.Now()
-	id, _ := NewBookID("550e8400-e29b-41d4-a716-446655440000")
-	gid, _ := NewGoogleBooksID("googleId123")
-	title, _ := NewBookTitle("テストタイトル")
-	authorA, _ := NewAuthor("著者A")
-	authors, _ := NewAuthors([]Author{authorA})
+	id := newTestBookID(t, "550e8400-e29b-41d4-a716-446655440000")
+	gid := newTestGoogleBooksID(t, "googleId123")
+	title := newTestBookTitle(t, "テストタイトル")
+	authors := newTestAuthors(t, "著者A")
 
 	book := NewBook(id, gid, title, nil, authors, now, now)
 

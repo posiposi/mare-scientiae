@@ -6,8 +6,14 @@ import (
 )
 
 func TestNewAuthors(t *testing.T) {
-	authorA, _ := NewAuthor("著者A")
-	authorB, _ := NewAuthor("著者B")
+	authorA, err := NewAuthor("著者A")
+	if err != nil {
+		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者A", err)
+	}
+	authorB, err := NewAuthor("著者B")
+	if err != nil {
+		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者B", err)
+	}
 
 	tests := []struct {
 		name    string
@@ -66,14 +72,27 @@ func TestNewAuthors(t *testing.T) {
 }
 
 func TestAuthors_Values_返却値の変更が元データに影響しない(t *testing.T) {
-	authorA, _ := NewAuthor("著者A")
-	authorB, _ := NewAuthor("著者B")
-	authors, _ := NewAuthors([]Author{authorA, authorB})
+	authorA, err := NewAuthor("著者A")
+	if err != nil {
+		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者A", err)
+	}
+	authorB, err := NewAuthor("著者B")
+	if err != nil {
+		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者B", err)
+	}
+	authors, err := NewAuthors([]Author{authorA, authorB})
+	if err != nil {
+		t.Fatalf("NewAuthors() unexpected error: %v", err)
+	}
 
 	values := authors.Values()
-	values[0] = Author{value: "改変"}
+	modified, err := NewAuthor("改変")
+	if err != nil {
+		t.Fatalf("NewAuthor(%q) unexpected error: %v", "改変", err)
+	}
+	values[0] = modified
 
 	if authors.Values()[0].String() != "著者A" {
-		t.Errorf("Values() returned reference to internal slice, expected copy")
+		t.Errorf("Authors.Values()[0].String() = %q, want %q", authors.Values()[0].String(), "著者A")
 	}
 }
