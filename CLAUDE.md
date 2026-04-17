@@ -54,9 +54,10 @@ docker-compose で以下の3サービスを構成する。
 
 ## スキーマ管理
 
-[Ent](https://entgo.io) の宣言的スキーマを採用。スキーマはGoコードとして `internal/infrastructure/ent/schema/` に定義し、`go generate` でクライアントコードを生成する。マイグレーションは Ent の [auto-migration](https://entgo.io/docs/migrate#auto-migration) を利用する。
+[Ent](https://entgo.io) の宣言的スキーマを採用。スキーマはGoコードとして `internal/infrastructure/ent/schema/` に定義し、`go generate` でクライアントコードを生成する。マイグレーションは Ent の [auto-migration](https://entgo.io/docs/migrate#auto-migration) を `cmd/ent` の手動CLIから実行する。将来的にテーブル数が増えた段階で Atlas versioned migrations に移行する。
 
 ```
+cmd/ent/main.go             … マイグレーション実行用CLI（Schema.Create）
 internal/infrastructure/ent/
   generate.go               … //go:generate ディレクティブ
   schema/<エンティティ>.go  … スキーマ定義（Goコード）
@@ -69,7 +70,9 @@ ent CLI は `api` コンテナイメージに `go install entgo.io/ent/cmd/ent@<
 # ent クライアントコード生成
 docker compose exec api go generate ./internal/infrastructure/ent
 
-# マイグレーション（auto-migration）はアプリ起動時に client.Schema.Create(ctx) を呼んで反映する
+# マイグレーション実行（DATABASE_URL 必須、auto-migration は append-only）
+docker compose exec -e DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable" \
+  api go run ./cmd/ent
 ```
 
 ## 開発フロー
