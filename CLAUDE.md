@@ -44,35 +44,32 @@ domain層は外部パッケージに一切依存しない。infrastructure層は
 
 ## Docker 開発環境
 
-docker-compose で以下の4サービスを構成する。
+docker-compose で以下の3サービスを構成する。
 
-| サービス | イメージ            | 役割                               |
-| -------- | ------------------- | ---------------------------------- |
-| api      | 自前ビルド（Go）    | アプリケーション本体               |
-| db       | postgres:18.3       | 開発用データベース                 |
-| test-db  | postgres:18.3       | テスト用データベース（TDDで使用）  |
-| atlas    | arigaio/atlas:1.2.0 | スキーマ管理（宣言的ワークフロー） |
+| サービス | イメージ         | 役割                              |
+| -------- | ---------------- | --------------------------------- |
+| api      | 自前ビルド（Go） | アプリケーション本体              |
+| db       | postgres:18.3    | 開発用データベース                |
+| test-db  | postgres:18.3    | テスト用データベース（TDDで使用） |
 
 ## スキーマ管理
 
-Atlas（宣言的スキーマ管理）を採用。Go公式レイアウトに従い、非Goファイルはプロジェクトルートに配置する。スキーマ適用は `/schema-apply` スキルを使用すること。
+[Ent](https://entgo.io) の宣言的スキーマを採用。スキーマはGoコードとして `internal/infrastructure/ent/schema/` に定義し、`go generate` でクライアントコードを生成する。マイグレーションは Ent の [auto-migration](https://entgo.io/docs/migrate#auto-migration) を利用する。
 
 ```
-atlas.hcl              … Atlas プロジェクト設定（srcは配列で複数ディレクトリを指定）
-schemas/               … スキーマ宣言（テーブル定義）
-  db/
-    schema.hcl         … データベース定義（publicスキーマ）
-    tables/            … テーブル定義（*.pg.hcl）
+internal/infrastructure/ent/
+  generate.go               … //go:generate ディレクティブ
+  schema/<エンティティ>.go  … スキーマ定義（Goコード）
+  <生成ファイル>            … go generate で生成・Gitコミット
 ```
 
-テーブル定義ファイルは `schemas/db/tables/` に `<テーブル名>.pg.hcl` の命名規則で配置する。Atlasはディレクトリを再帰的にスキャンしないため、`atlas.hcl` の `src` に `schemas/db` と `schemas/db/tables` の両方を配列で指定している。
+ent CLI は `api` コンテナイメージに `go install entgo.io/ent/cmd/ent@<version>` で同梱している。
 
 ```bash
-# スキーマ適用（dry-run）
-docker compose run --rm atlas schema apply --env local --dry-run
+# ent クライアントコード生成
+docker compose exec api go generate ./internal/infrastructure/ent
 
-# スキーマ適用
-docker compose run --rm atlas schema apply --env local --auto-approve
+# マイグレーション（auto-migration）はアプリ起動時に client.Schema.Create(ctx) を呼んで反映する
 ```
 
 ## 開発フロー
