@@ -25,7 +25,7 @@ func (Book) Fields() []ent.Field {
 			MaxLen(500).
 			Optional().
 			Nillable(),
-		field.Strings("authors"),
+		field.JSON("authors", []string{}),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
