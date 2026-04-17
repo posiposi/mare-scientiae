@@ -70,9 +70,9 @@ ent CLI は `api` コンテナイメージに `go install entgo.io/ent/cmd/ent@<
 # ent クライアントコード生成
 docker compose exec api go generate ./internal/infrastructure/ent
 
-# マイグレーション実行（DATABASE_URL 必須、auto-migration は append-only）
-docker compose exec -e DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable" \
-  api go run ./cmd/ent
+# マイグレーション実行（auto-migration は append-only）
+# DATABASE_URL は docker-compose.yml で api コンテナに注入済み
+docker compose exec api go run ./cmd/ent
 ```
 
 ## 開発フロー
