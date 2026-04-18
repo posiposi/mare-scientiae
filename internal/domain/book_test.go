@@ -32,9 +32,9 @@ func newTestBookTitle(t *testing.T, v string) BookTitle {
 	return title
 }
 
-func newTestBookSubtitle(t *testing.T, v string) BookSubtitle {
+func newTestBookSubtitle(t *testing.T, v string) *BookSubtitle {
 	t.Helper()
-	subtitle, err := NewBookSubtitle(v)
+	subtitle, err := NewBookSubtitle(&v)
 	if err != nil {
 		t.Fatalf("NewBookSubtitle(%q) unexpected error: %v", v, err)
 	}
@@ -43,15 +43,7 @@ func newTestBookSubtitle(t *testing.T, v string) BookSubtitle {
 
 func newTestAuthors(t *testing.T, names ...string) Authors {
 	t.Helper()
-	var authorList []Author
-	for _, name := range names {
-		a, err := NewAuthor(name)
-		if err != nil {
-			t.Fatalf("NewAuthor(%q) unexpected error: %v", name, err)
-		}
-		authorList = append(authorList, a)
-	}
-	authors, err := NewAuthors(authorList)
+	authors, err := NewAuthors(names)
 	if err != nil {
 		t.Fatalf("NewAuthors() unexpected error: %v", err)
 	}
@@ -66,7 +58,7 @@ func TestNewBook_正常系_全フィールド指定(t *testing.T) {
 	subtitle := newTestBookSubtitle(t, "副題テスト")
 	authors := newTestAuthors(t, "著者A", "著者B")
 
-	book := NewBook(id, gid, title, &subtitle, authors, now, now)
+	book := NewBook(id, gid, title, subtitle, authors, now, now)
 
 	if book.ID.String() != "550e8400-e29b-41d4-a716-446655440000" {
 		t.Errorf("NewBook().ID.String() = %q, want %q", book.ID.String(), "550e8400-e29b-41d4-a716-446655440000")

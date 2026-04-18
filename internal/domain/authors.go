@@ -8,13 +8,19 @@ type Authors struct {
 	values []Author
 }
 
-func NewAuthors(v []Author) (Authors, error) {
-	if len(v) == 0 {
+func NewAuthors(values []string) (Authors, error) {
+	if len(values) == 0 {
 		return Authors{}, ErrAuthorsRequired
 	}
-	copied := make([]Author, len(v))
-	copy(copied, v)
-	return Authors{values: copied}, nil
+	items := make([]Author, 0, len(values))
+	for _, v := range values {
+		a, err := NewAuthor(v)
+		if err != nil {
+			return Authors{}, err
+		}
+		items = append(items, a)
+	}
+	return Authors{values: items}, nil
 }
 
 func (a Authors) Values() []Author {

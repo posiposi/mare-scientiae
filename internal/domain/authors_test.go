@@ -6,44 +6,38 @@ import (
 )
 
 func TestNewAuthors(t *testing.T) {
-	authorA, err := NewAuthor("著者A")
-	if err != nil {
-		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者A", err)
-	}
-	authorB, err := NewAuthor("著者B")
-	if err != nil {
-		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者B", err)
-	}
-
 	tests := []struct {
 		name    string
-		input   []Author
-		want    int
+		input   []string
+		want    []string
 		wantErr error
 	}{
 		{
 			name:    "1人の著者",
-			input:   []Author{authorA},
-			want:    1,
+			input:   []string{"著者A"},
+			want:    []string{"著者A"},
 			wantErr: nil,
 		},
 		{
 			name:    "複数の著者",
-			input:   []Author{authorA, authorB},
-			want:    2,
+			input:   []string{"著者A", "著者B"},
+			want:    []string{"著者A", "著者B"},
 			wantErr: nil,
 		},
 		{
 			name:    "nilスライス",
 			input:   nil,
-			want:    0,
 			wantErr: ErrAuthorsRequired,
 		},
 		{
 			name:    "空スライス",
-			input:   []Author{},
-			want:    0,
+			input:   []string{},
 			wantErr: ErrAuthorsRequired,
+		},
+		{
+			name:    "空文字を含む",
+			input:   []string{"著者A", ""},
+			wantErr: ErrAuthorEmpty,
 		},
 	}
 
@@ -56,31 +50,29 @@ func TestNewAuthors(t *testing.T) {
 					t.Fatal("expected error, got nil")
 				}
 				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("NewAuthors() error = %v, want %v", err, tt.wantErr)
+					t.Errorf("NewAuthors(%v) error = %v, want %v", tt.input, err, tt.wantErr)
 				}
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("NewAuthors() unexpected error: %v", err)
+				t.Fatalf("NewAuthors(%v) unexpected error: %v", tt.input, err)
 			}
-			if len(got.Values()) != tt.want {
-				t.Errorf("NewAuthors() len = %d, want %d", len(got.Values()), tt.want)
+			values := got.Values()
+			if len(values) != len(tt.want) {
+				t.Fatalf("NewAuthors(%v) len = %d, want %d", tt.input, len(values), len(tt.want))
+			}
+			for i, v := range values {
+				if v.String() != tt.want[i] {
+					t.Errorf("NewAuthors(%v)[%d] = %q, want %q", tt.input, i, v.String(), tt.want[i])
+				}
 			}
 		})
 	}
 }
 
 func TestAuthors_Values_返却値の変更が元データに影響しない(t *testing.T) {
-	authorA, err := NewAuthor("著者A")
-	if err != nil {
-		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者A", err)
-	}
-	authorB, err := NewAuthor("著者B")
-	if err != nil {
-		t.Fatalf("NewAuthor(%q) unexpected error: %v", "著者B", err)
-	}
-	authors, err := NewAuthors([]Author{authorA, authorB})
+	authors, err := NewAuthors([]string{"著者A", "著者B"})
 	if err != nil {
 		t.Fatalf("NewAuthors() unexpected error: %v", err)
 	}

@@ -13,14 +13,17 @@ type BookSubtitle struct {
 	value string
 }
 
-func NewBookSubtitle(v string) (BookSubtitle, error) {
-	if v == "" {
-		return BookSubtitle{}, ErrBookSubtitleEmpty
+func NewBookSubtitle(v *string) (*BookSubtitle, error) {
+	if v == nil {
+		return nil, nil
 	}
-	if len([]rune(v)) > bookSubtitleMaxLen {
-		return BookSubtitle{}, ErrBookSubtitleTooLong
+	if *v == "" {
+		return nil, ErrBookSubtitleEmpty
 	}
-	return BookSubtitle{value: v}, nil
+	if len([]rune(*v)) > bookSubtitleMaxLen {
+		return nil, ErrBookSubtitleTooLong
+	}
+	return &BookSubtitle{value: *v}, nil
 }
 
 func (s BookSubtitle) String() string {

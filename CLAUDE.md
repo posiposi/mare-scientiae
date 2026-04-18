@@ -42,6 +42,13 @@ internal/
 
 domain層は外部パッケージに一切依存しない。infrastructure層はdomain/applicationのインターフェースを実装する。
 
+### interface 適合チェックのイディオム
+
+`var _ Interface = (*Impl)(nil)` によるコンパイル時の interface 適合チェックは、以下の方針で扱う。
+
+- **追加する**: 実装 struct が interface 型として利用されている箇所（DI の引数、フィールド、戻り値等）がコード内にまだ存在しない場合。チェックが無いとシグネチャ変更時にコンパイルエラーが検出されないため、明示的に宣言する。
+- **追加しない**: application 層や `cmd/server/` などで既に interface 型として利用されている場合。コンパイラが利用箇所で自動的に適合性を検査するため、イディオムは冗長となる。
+
 ## Docker 開発環境
 
 docker-compose で以下の3サービスを構成する。

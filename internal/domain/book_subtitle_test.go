@@ -7,34 +7,41 @@ import (
 )
 
 func TestNewBookSubtitle(t *testing.T) {
+	valid := "副題テスト"
+	max := strings.Repeat("あ", 500)
+	empty := ""
+	tooLong := strings.Repeat("あ", 501)
+
 	tests := []struct {
 		name    string
-		input   string
-		want    string
+		input   *string
+		wantNil bool
+		wantStr string
 		wantErr error
 	}{
 		{
+			name:    "nilはnilを返す",
+			input:   nil,
+			wantNil: true,
+		},
+		{
 			name:    "有効な副題",
-			input:   "副題テスト",
-			want:    "副題テスト",
-			wantErr: nil,
+			input:   &valid,
+			wantStr: valid,
 		},
 		{
 			name:    "500文字ちょうど",
-			input:   strings.Repeat("あ", 500),
-			want:    strings.Repeat("あ", 500),
-			wantErr: nil,
+			input:   &max,
+			wantStr: max,
 		},
 		{
 			name:    "空文字",
-			input:   "",
-			want:    "",
+			input:   &empty,
 			wantErr: ErrBookSubtitleEmpty,
 		},
 		{
 			name:    "501文字で上限超過",
-			input:   strings.Repeat("あ", 501),
-			want:    "",
+			input:   &tooLong,
 			wantErr: ErrBookSubtitleTooLong,
 		},
 	}
@@ -48,16 +55,25 @@ func TestNewBookSubtitle(t *testing.T) {
 					t.Fatal("expected error, got nil")
 				}
 				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("NewBookSubtitle(%q) error = %v, want %v", tt.input, err, tt.wantErr)
+					t.Errorf("NewBookSubtitle() error = %v, want %v", err, tt.wantErr)
 				}
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("NewBookSubtitle(%q) unexpected error: %v", tt.input, err)
+				t.Fatalf("NewBookSubtitle() unexpected error: %v", err)
 			}
-			if got.String() != tt.want {
-				t.Errorf("NewBookSubtitle(%q).String() = %q, want %q", tt.input, got.String(), tt.want)
+			if tt.wantNil {
+				if got != nil {
+					t.Errorf("NewBookSubtitle() = %q, want nil", got.String())
+				}
+				return
+			}
+			if got == nil {
+				t.Fatalf("NewBookSubtitle() = nil, want %q", tt.wantStr)
+			}
+			if got.String() != tt.wantStr {
+				t.Errorf("NewBookSubtitle().String() = %q, want %q", got.String(), tt.wantStr)
 			}
 		})
 	}
