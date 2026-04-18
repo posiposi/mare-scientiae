@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -49,32 +50,40 @@ func TestNewBookSubtitle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := NewBookSubtitle(tt.input)
+			input := formatNillableString(tt.input)
 
 			if tt.wantErr != nil {
 				if err == nil {
-					t.Fatal("expected error, got nil")
+					t.Fatalf("NewBookSubtitle(%s) error = nil, want %v", input, tt.wantErr)
 				}
 				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("NewBookSubtitle() error = %v, want %v", err, tt.wantErr)
+					t.Errorf("NewBookSubtitle(%s) error = %v, want %v", input, err, tt.wantErr)
 				}
 				return
 			}
 
 			if err != nil {
-				t.Fatalf("NewBookSubtitle() unexpected error: %v", err)
+				t.Fatalf("NewBookSubtitle(%s) unexpected error: %v", input, err)
 			}
 			if tt.wantNil {
 				if got != nil {
-					t.Errorf("NewBookSubtitle() = %q, want nil", got.String())
+					t.Errorf("NewBookSubtitle(%s) = %q, want nil", input, got.String())
 				}
 				return
 			}
 			if got == nil {
-				t.Fatalf("NewBookSubtitle() = nil, want %q", tt.wantStr)
+				t.Fatalf("NewBookSubtitle(%s) = nil, want %q", input, tt.wantStr)
 			}
 			if got.String() != tt.wantStr {
-				t.Errorf("NewBookSubtitle().String() = %q, want %q", got.String(), tt.wantStr)
+				t.Errorf("NewBookSubtitle(%s).String() = %q, want %q", input, got.String(), tt.wantStr)
 			}
 		})
 	}
+}
+
+func formatNillableString(v *string) string {
+	if v == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%q", *v)
 }
