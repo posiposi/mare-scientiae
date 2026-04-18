@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"testing"
 
@@ -131,4 +132,74 @@ func derefString(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		seed    func(t *testing.T)
+		wantErr error
+	}{
+		{
+			name: "authorsが空配列のレコード",
+			seed: func(t *testing.T) {
+				t.Helper()
+				if _, err := testClient.Book.Create().
+					SetGoogleBooksID("gbid-empty-authors").
+					SetTitle("Title").
+					SetAuthors([]string{}).
+					Save(ctx); err != nil {
+					t.Fatalf("seed insert: %v", err)
+				}
+			},
+			wantErr: domain.ErrAuthorsRequired,
+		},
+		{
+			name: "authorsに空文字を含むレコード",
+			seed: func(t *testing.T) {
+				t.Helper()
+				if _, err := testClient.Book.Create().
+					SetGoogleBooksID("gbid-empty-author-element").
+					SetTitle("Title").
+					SetAuthors([]string{"valid", ""}).
+					Save(ctx); err != nil {
+					t.Fatalf("seed insert: %v", err)
+				}
+			},
+			wantErr: domain.ErrAuthorEmpty,
+		},
+		{
+			name: "subtitleが空文字のレコード",
+			seed: func(t *testing.T) {
+				t.Helper()
+				if _, err := testClient.Book.Create().
+					SetGoogleBooksID("gbid-empty-subtitle").
+					SetTitle("Title").
+					SetSubtitle("").
+					SetAuthors([]string{"Author"}).
+					Save(ctx); err != nil {
+					t.Fatalf("seed insert: %v", err)
+				}
+			},
+			wantErr: domain.ErrBookSubtitleEmpty,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			truncateBooks(ctx, t)
+			tt.seed(t)
+
+			repo := NewBookQueryRepository(testClient)
+			_, err := repo.FindAll(ctx)
+			if err == nil {
+				t.Fatalf("FindAll() error = nil, want %v", tt.wantErr)
+			}
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("FindAll() error = %v, want chain with %v", err, tt.wantErr)
+			}
+		})
+	}
 }
