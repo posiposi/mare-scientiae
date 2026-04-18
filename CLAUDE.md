@@ -42,6 +42,13 @@ internal/
 
 domain層は外部パッケージに一切依存しない。infrastructure層はdomain/applicationのインターフェースを実装する。
 
+### interface 適合チェックのイディオム
+
+`var _ Interface = (*Impl)(nil)` によるコンパイル時の interface 適合チェックは、以下の方針で扱う。
+
+- **追加する**: 実装 struct が**本番コード（非テスト）で** interface 型として利用されている箇所（DI の引数、フィールド、戻り値等）がまだ存在しない場合。チェックが無いとシグネチャ変更時にコンパイルエラーが検出されないため、明示的に宣言する。
+- **追加しない**: application 層や `cmd/server/` などの本番コードで既に interface 型として利用されている場合。コンパイラが利用箇所で自動的に適合性を検査するため、イディオムは冗長となる。
+
 ## Docker 開発環境
 
 docker-compose で以下の3サービスを構成する。
@@ -101,14 +108,17 @@ docker compose exec api go run ./cmd/ent
 - `/tdd-workflow` スキルを読み込み、Red→Green→Refactoringのサイクルで実装する
 - コミット前に `gofmt -w .` および `go vet ./...` を `api` コンテナ内で実行し、フォーマットと静的解析を通すこと
 - コミット時は `/commit-commands:commit` を使用する
+  - コミットの粒度は**最低限の機能単位または修正項目**一つずつで行うこと
+  - コミットメッセージは日本語で記述するようにコマンド実行時に指示すること
 - フロントエンド・バックエンド等を並行して実装できる場合はサブエージェントで並列実装する
 - `code-simplifier` プラグインを使用してコードの簡潔さ・可読性を維持する
 - `security-guideline` プラグインに準拠し、セキュリティを考慮した実装を行う
 
 ### 4. PR作成
 
-- PR作成前のコードpushはユーザーの承認を得てから実行する
 - `/commit-commands:commit-push-pr` を使用してPR作成を行う
+  - git pushおよびPR作成前にユーザー承認を得ること
+  - コミットメッセージとPRタイトルは日本語で作成するようにコマンド実行時に指示すること
 
 ### 5. レビュー
 

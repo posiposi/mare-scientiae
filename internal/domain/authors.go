@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrAuthorsRequired = errors.New("authors: at least one author is required")
 
@@ -8,13 +11,19 @@ type Authors struct {
 	values []Author
 }
 
-func NewAuthors(v []Author) (Authors, error) {
-	if len(v) == 0 {
+func NewAuthors(values []string) (Authors, error) {
+	if len(values) == 0 {
 		return Authors{}, ErrAuthorsRequired
 	}
-	copied := make([]Author, len(v))
-	copy(copied, v)
-	return Authors{values: copied}, nil
+	items := make([]Author, 0, len(values))
+	for i, v := range values {
+		a, err := NewAuthor(v)
+		if err != nil {
+			return Authors{}, fmt.Errorf("authors[%d] (%q): %w", i, v, err)
+		}
+		items = append(items, a)
+	}
+	return Authors{values: items}, nil
 }
 
 func (a Authors) Values() []Author {
