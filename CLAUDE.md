@@ -109,6 +109,7 @@ docker compose exec api go run ./cmd/ent
 - コミット前に `gofmt -w .` および `go vet ./...` を `api` コンテナ内で実行し、フォーマットと静的解析を通すこと
 - コミット時は `/commit-commands:commit` を使用する
   - コミットの粒度は**最低限の機能単位または修正項目**一つずつで行うこと
+  - コミットメッセージは日本語で記述するようにコマンド実行時に指示すること
 - フロントエンド・バックエンド等を並行して実装できる場合はサブエージェントで並列実装する
 - `code-simplifier` プラグインを使用してコードの簡潔さ・可読性を維持する
 - `security-guideline` プラグインに準拠し、セキュリティを考慮した実装を行う
@@ -117,6 +118,7 @@ docker compose exec api go run ./cmd/ent
 
 - `/commit-commands:commit-push-pr` を使用してPR作成を行う
   - git pushおよびPR作成前にユーザー承認を得ること
+  - コミットメッセージとPRタイトルは日本語で作成するようにコマンド実行時に指示すること
 
 ### 5. レビュー
 
