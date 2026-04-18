@@ -37,23 +37,30 @@ func (r *BookQueryRepository) FindAll(ctx context.Context) ([]*domain.Book, erro
 func toDomainBook(row *ent.Book) (*domain.Book, error) {
 	id, err := domain.NewBookID(row.ID.String())
 	if err != nil {
-		return nil, fmt.Errorf("book id (%s): %w", row.ID, err)
+		return nil, fmt.Errorf("book id (value=%q): %w", row.ID, err)
 	}
 	googleBooksID, err := domain.NewGoogleBooksID(row.GoogleBooksID)
 	if err != nil {
-		return nil, fmt.Errorf("google books id (%s): %w", row.GoogleBooksID, err)
+		return nil, fmt.Errorf("google books id (id=%s, value=%q): %w", row.ID, row.GoogleBooksID, err)
 	}
 	title, err := domain.NewBookTitle(row.Title)
 	if err != nil {
-		return nil, fmt.Errorf("book title (%s): %w", row.ID, err)
+		return nil, fmt.Errorf("book title (id=%s, value=%q): %w", row.ID, row.Title, err)
 	}
 	subtitle, err := domain.NewBookSubtitle(row.Subtitle)
 	if err != nil {
-		return nil, fmt.Errorf("book subtitle (%s): %w", row.ID, err)
+		return nil, fmt.Errorf("book subtitle (id=%s, value=%s): %w", row.ID, formatNillableString(row.Subtitle), err)
 	}
 	authors, err := domain.NewAuthors(row.Authors)
 	if err != nil {
-		return nil, fmt.Errorf("book authors (%s): %w", row.ID, err)
+		return nil, fmt.Errorf("book authors (id=%s, value=%q): %w", row.ID, row.Authors, err)
 	}
 	return domain.NewBook(id, googleBooksID, title, subtitle, authors, row.CreatedAt, row.UpdatedAt), nil
+}
+
+func formatNillableString(v *string) string {
+	if v == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("%q", *v)
 }

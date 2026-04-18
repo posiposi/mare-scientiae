@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrAuthorsRequired = errors.New("authors: at least one author is required")
 
@@ -13,10 +16,10 @@ func NewAuthors(values []string) (Authors, error) {
 		return Authors{}, ErrAuthorsRequired
 	}
 	items := make([]Author, 0, len(values))
-	for _, v := range values {
+	for i, v := range values {
 		a, err := NewAuthor(v)
 		if err != nil {
-			return Authors{}, err
+			return Authors{}, fmt.Errorf("authors[%d] (%q): %w", i, v, err)
 		}
 		items = append(items, a)
 	}
