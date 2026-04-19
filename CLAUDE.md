@@ -90,8 +90,9 @@ docker compose exec api go run ./cmd/ent
 
 - ユーザーが指定したIssue番号からGitHub Issuesを取得する
 - GitHubへのアクセスはMCPサーバー（`mcp__github`）を使用する
-- `main`ブランチから、Issue番号とタイトルに適した英語名で作業ブランチを作成する
-  - 例: `git switch -c "#1_fix_bugs"`
+- `main`ブランチから、Issue番号に `issue` プレフィックスを付けた英語名で作業ブランチを作成する
+  - 例: `git switch -c "issue1_fix_bugs"`
+  - `#` を含むブランチ名は GitHub Actions のジョブ生成が機能しないため使用しない
 
 ### 2. 設計
 
