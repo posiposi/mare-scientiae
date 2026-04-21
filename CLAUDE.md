@@ -32,22 +32,40 @@ cmd/
   server/       … HTTPサーバのエントリポイント
   lambda/       … Lambda用エントリポイント（将来）
 internal/
-  domain/       … エンティティ・値オブジェクト・リポジトリIF（外部依存なし）
-  application/  … ユースケース・ポート定義（ドメイン層のみに依存）
-  infrastructure/ … 外部サービス実装（Claude API, DB等）
-  presentation/ … HTTPハンドラ・ルーティング
+  domain/
+    model/      … エンティティ・値オブジェクト（外部依存なし）
+    repository/ … Repository interface（ドメインが要求する永続化契約）
+  usecase/
+    interactor/ … ユースケース本体の実装
+    port/
+      output/   … usecase が要求する外部サービス interface（Claude API 等）
+  infrastructure/
+    ent/         … Ent スキーマ定義と生成コード
+    persistence/ … Repository interface の実装（DB アクセス）
+  presentation/
+    handler/    … HTTP ハンドラ（消費する usecase interface はハンドラ側で定義）
+    dto/        … レスポンス/リクエスト DTO
+    router/     … ルーティング定義
 ```
 
-依存方向: presentation → application → domain ← infrastructure
+依存方向: presentation → usecase → domain ← infrastructure
 
-domain層は外部パッケージに一切依存しない。infrastructure層はdomain/applicationのインターフェースを実装する。
+domain 層は外部パッケージに一切依存しない。infrastructure 層は domain のインターフェース（repository）を実装する。
+
+### interface 配置原則
+
+interface の配置は `/interface-placement` スキルに従う。概要:
+
+- 基本は Go idiom に則り **利用側（consumer）** に interface を定義する。handler が呼ぶ usecase interface は handler パッケージ内で定義する
+- 例外として **repository interface のみ** `internal/domain/repository/` に配置する（ドメインが要求する永続化契約のため）
+- 命名: repository 系は実装 struct 名 + `-er`（例: `BookRepository` → `BookQueryRepositorier`）。usecase / handler 側 interface も `-er` を付ける
 
 ### interface 適合チェックのイディオム
 
 `var _ Interface = (*Impl)(nil)` によるコンパイル時の interface 適合チェックは、以下の方針で扱う。
 
 - **追加する**: 実装 struct が**本番コード（非テスト）で** interface 型として利用されている箇所（DI の引数、フィールド、戻り値等）がまだ存在しない場合。チェックが無いとシグネチャ変更時にコンパイルエラーが検出されないため、明示的に宣言する。
-- **追加しない**: application 層や `cmd/server/` などの本番コードで既に interface 型として利用されている場合。コンパイラが利用箇所で自動的に適合性を検査するため、イディオムは冗長となる。
+- **追加しない**: usecase 層や `cmd/server/` などの本番コードで既に interface 型として利用されている場合。コンパイラが利用箇所で自動的に適合性を検査するため、イディオムは冗長となる。
 
 ## Docker 開発環境
 
@@ -121,3 +139,10 @@ docker compose exec api go run ./cmd/ent
 - `/code-review:code-review` プラグインを使用してコードレビューを実施する
 - レビューで指摘された項目をユーザーに提示し、修正が必要な箇所の指示を受ける
 - 修正は実装と同様にTDD（`/tdd-workflow`）で行う
+
+## サブエージェント
+
+### コードベース調査
+
+- コードベースの調査を行う際は`code-analyzer`サブエージェントを利用する
+  - フロントエンド、バックエンド等、複数の領域が異なる項目で調査が必要な場合はサブエージェントを並列で起動する
