@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 )
 
 type BookResponse struct {
@@ -20,7 +20,7 @@ type ListBooksResponse struct {
 	Books []BookResponse `json:"books"`
 }
 
-func NewBookResponse(b *domain.Book) BookResponse {
+func NewBookResponse(b *model.Book) BookResponse {
 	var subtitle *string
 	if b.Subtitle != nil {
 		s := b.Subtitle.String()
@@ -42,7 +42,7 @@ func NewBookResponse(b *domain.Book) BookResponse {
 	}
 }
 
-func NewListBooksResponse(books []*domain.Book) ListBooksResponse {
+func NewListBooksResponse(books []*model.Book) ListBooksResponse {
 	out := make([]BookResponse, 0, len(books))
 	for _, b := range books {
 		out = append(out, NewBookResponse(b))

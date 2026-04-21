@@ -13,11 +13,11 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog/log"
 
-	"helloworld/internal/application/usecase"
 	"helloworld/internal/infrastructure/ent"
-	"helloworld/internal/infrastructure/repository"
+	"helloworld/internal/infrastructure/persistence"
 	"helloworld/internal/presentation/handler"
 	"helloworld/internal/presentation/router"
+	"helloworld/internal/usecase/interactor"
 )
 
 const listenAddr = ":8080"
@@ -46,9 +46,9 @@ func run(_ context.Context) error {
 	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.Postgres, db)))
 	defer client.Close()
 
-	bookRepo := repository.NewBookQueryRepository(client)
-	listBooksUsecase := usecase.NewListBooksUsecase(bookRepo)
-	bookHandler := handler.NewBookHandler(listBooksUsecase)
+	bookRepo := persistence.NewBookRepository(client)
+	listBooksInteractor := interactor.NewListBooksInteractor(bookRepo)
+	bookHandler := handler.NewBookHandler(listBooksInteractor)
 	mux := router.New(bookHandler)
 
 	log.Info().Str("addr", listenAddr).Msg("starting http server")

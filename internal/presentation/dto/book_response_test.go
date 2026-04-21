@@ -6,40 +6,40 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 	"helloworld/internal/presentation/dto"
 )
 
-func buildBook(t *testing.T, id, gbid, title string, subtitle *string, authorNames []string, createdAt, updatedAt time.Time) *domain.Book {
+func buildBook(t *testing.T, id, gbid, title string, subtitle *string, authorNames []string, createdAt, updatedAt time.Time) *model.Book {
 	t.Helper()
-	bookID, err := domain.NewBookID(id)
+	bookID, err := model.NewBookID(id)
 	if err != nil {
 		t.Fatalf("NewBookID: %v", err)
 	}
-	googleBooksID, err := domain.NewGoogleBooksID(gbid)
+	googleBooksID, err := model.NewGoogleBooksID(gbid)
 	if err != nil {
 		t.Fatalf("NewGoogleBooksID: %v", err)
 	}
-	bookTitle, err := domain.NewBookTitle(title)
+	bookTitle, err := model.NewBookTitle(title)
 	if err != nil {
 		t.Fatalf("NewBookTitle: %v", err)
 	}
-	bookSubtitle, err := domain.NewBookSubtitle(subtitle)
+	bookSubtitle, err := model.NewBookSubtitle(subtitle)
 	if err != nil {
 		t.Fatalf("NewBookSubtitle: %v", err)
 	}
-	authors, err := domain.NewAuthors(authorNames)
+	authors, err := model.NewAuthors(authorNames)
 	if err != nil {
 		t.Fatalf("NewAuthors: %v", err)
 	}
-	return domain.NewBook(bookID, googleBooksID, bookTitle, bookSubtitle, authors, createdAt, updatedAt)
+	return model.NewBook(bookID, googleBooksID, bookTitle, bookSubtitle, authors, createdAt, updatedAt)
 }
 
 func TestNewListBooksResponse_ConvertsAllFields(t *testing.T) {
 	createdAt := time.Date(2026, 4, 20, 10, 0, 0, 0, time.UTC)
 	updatedAt := time.Date(2026, 4, 21, 11, 0, 0, 0, time.UTC)
 	subtitle := "Tackling Complexity"
-	books := []*domain.Book{
+	books := []*model.Book{
 		buildBook(t, "11111111-1111-4111-8111-111111111111", "gbid-001", "DDD", &subtitle, []string{"Eric Evans"}, createdAt, updatedAt),
 		buildBook(t, "22222222-2222-4222-8222-222222222222", "gbid-002", "TGPL", nil, []string{"Donovan", "Kernighan"}, createdAt, updatedAt),
 	}
@@ -74,7 +74,7 @@ func TestNewListBooksResponse_ConvertsAllFields(t *testing.T) {
 }
 
 func TestNewListBooksResponse_EmptyInputReturnsEmptyBooks(t *testing.T) {
-	got := dto.NewListBooksResponse([]*domain.Book{})
+	got := dto.NewListBooksResponse([]*model.Book{})
 	if got.Books == nil {
 		t.Fatal("Books is nil, want non-nil empty slice")
 	}

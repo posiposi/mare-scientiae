@@ -7,12 +7,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 	"helloworld/internal/presentation/dto"
 )
 
 type ListBooksUsecaser interface {
-	Execute(ctx context.Context) ([]*domain.Book, error)
+	Execute(ctx context.Context) ([]*model.Book, error)
 }
 
 type BookHandler struct {

@@ -11,46 +11,46 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 	"helloworld/internal/presentation/dto"
 	"helloworld/internal/presentation/handler"
 )
 
 type fakeListBooksUsecase struct {
-	books []*domain.Book
+	books []*model.Book
 	err   error
 }
 
-func (f *fakeListBooksUsecase) Execute(_ context.Context) ([]*domain.Book, error) {
+func (f *fakeListBooksUsecase) Execute(_ context.Context) ([]*model.Book, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
 	return f.books, nil
 }
 
-func buildBook(t *testing.T, id, gbid, title string, subtitle *string, authorNames []string, createdAt, updatedAt time.Time) *domain.Book {
+func buildBook(t *testing.T, id, gbid, title string, subtitle *string, authorNames []string, createdAt, updatedAt time.Time) *model.Book {
 	t.Helper()
-	bookID, err := domain.NewBookID(id)
+	bookID, err := model.NewBookID(id)
 	if err != nil {
 		t.Fatalf("NewBookID: %v", err)
 	}
-	googleBooksID, err := domain.NewGoogleBooksID(gbid)
+	googleBooksID, err := model.NewGoogleBooksID(gbid)
 	if err != nil {
 		t.Fatalf("NewGoogleBooksID: %v", err)
 	}
-	bookTitle, err := domain.NewBookTitle(title)
+	bookTitle, err := model.NewBookTitle(title)
 	if err != nil {
 		t.Fatalf("NewBookTitle: %v", err)
 	}
-	bookSubtitle, err := domain.NewBookSubtitle(subtitle)
+	bookSubtitle, err := model.NewBookSubtitle(subtitle)
 	if err != nil {
 		t.Fatalf("NewBookSubtitle: %v", err)
 	}
-	authors, err := domain.NewAuthors(authorNames)
+	authors, err := model.NewAuthors(authorNames)
 	if err != nil {
 		t.Fatalf("NewAuthors: %v", err)
 	}
-	return domain.NewBook(bookID, googleBooksID, bookTitle, bookSubtitle, authors, createdAt, updatedAt)
+	return model.NewBook(bookID, googleBooksID, bookTitle, bookSubtitle, authors, createdAt, updatedAt)
 }
 
 func TestBookHandler_ListBooks_Returns200WithBooksJSON(t *testing.T) {
@@ -59,7 +59,7 @@ func TestBookHandler_ListBooks_Returns200WithBooksJSON(t *testing.T) {
 	subtitle := "Tackling Complexity"
 	book := buildBook(t, "11111111-1111-4111-8111-111111111111", "gbid-001", "DDD", &subtitle, []string{"Eric Evans"}, createdAt, updatedAt)
 
-	uc := &fakeListBooksUsecase{books: []*domain.Book{book}}
+	uc := &fakeListBooksUsecase{books: []*model.Book{book}}
 	h := handler.NewBookHandler(uc)
 
 	rec := httptest.NewRecorder()
@@ -96,7 +96,7 @@ func TestBookHandler_ListBooks_Returns200WithBooksJSON(t *testing.T) {
 }
 
 func TestBookHandler_ListBooks_ReturnsEmptyArrayWhenNoBooks(t *testing.T) {
-	uc := &fakeListBooksUsecase{books: []*domain.Book{}}
+	uc := &fakeListBooksUsecase{books: []*model.Book{}}
 	h := handler.NewBookHandler(uc)
 
 	rec := httptest.NewRecorder()
