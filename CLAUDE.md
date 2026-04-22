@@ -130,9 +130,11 @@ docker compose exec api go run ./cmd/ent
 
 ### 4. PR作成
 
-- `/commit-commands:commit-push-pr` を使用してPR作成を行う
+- `/pull-request-creation` スキルを読み込み、PR作成フェーズを実行する
+- 内部で `/commit-commands:commit-push-pr` を呼び出す
   - git pushおよびPR作成前にユーザー承認を得ること
-  - コミットメッセージとPRタイトルは日本語で作成するようにコマンド実行時に指示すること
+  - コミットメッセージ・PRタイトル・PR本文は日本語で作成するようにコマンド実行時に指示すること
+  - PRタイトルにはIssue番号を含めない
 
 ### 5. レビュー
 
