@@ -48,7 +48,8 @@ func run(_ context.Context) error {
 
 	bookRepo := persistence.NewBookRepository(client)
 	listBooksInteractor := interactor.NewListBooksInteractor(bookRepo)
-	bookHandler := handler.NewBookHandler(listBooksInteractor)
+	getBookInteractor := interactor.NewGetBookInteractor(bookRepo)
+	bookHandler := handler.NewBookHandler(listBooksInteractor, getBookInteractor)
 	mux := router.New(bookHandler)
 
 	log.Info().Str("addr", listenAddr).Msg("starting http server")
