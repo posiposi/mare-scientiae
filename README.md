@@ -99,8 +99,8 @@ docker compose exec api go generate ./internal/infrastructure/ent
 docker compose exec api go run ./cmd/ent
 ```
 
-> [!IMPORTANT]
-> 現状ホットリロードは導入されていません。コード変更を反映するには `docker compose restart api` が必要です（[#28](https://github.com/posiposi/mare-scientiae/issues/28) で air の導入を検討中）。
+> [!TIP]
+> ホットリロードは [air](https://github.com/air-verse/air) で動作する。`docker compose up -d` 起動後、`./` 配下の `.go` ファイル変更を保存すれば自動で再ビルド・再起動される。設定は `.air.toml` を参照。
 
 ## 開発フロー
 
