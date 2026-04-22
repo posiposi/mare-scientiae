@@ -9,5 +9,6 @@ import (
 func New(bookHandler *handler.BookHandler) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /v1/books", bookHandler.ListBooks)
+	mux.HandleFunc("GET /v1/books/{id}", bookHandler.GetBook)
 	return mux
 }
