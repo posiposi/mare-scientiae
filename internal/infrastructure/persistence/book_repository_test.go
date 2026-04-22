@@ -1,4 +1,4 @@
-package repository
+package persistence
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 )
 
-func TestBookQueryRepository_FindAll_Empty(t *testing.T) {
+func TestBookRepository_FindAll_Empty(t *testing.T) {
 	ctx := context.Background()
 	truncateBooks(ctx, t)
 
-	repo := NewBookQueryRepository(testClient)
+	repo := NewBookRepository(testClient)
 	got, err := repo.FindAll(ctx)
 	if err != nil {
 		t.Fatalf("FindAll() unexpected error: %v", err)
@@ -32,7 +32,7 @@ type bookSeed struct {
 	authors       []string
 }
 
-func TestBookQueryRepository_FindAll_ReturnsInsertedBooks(t *testing.T) {
+func TestBookRepository_FindAll_ReturnsInsertedBooks(t *testing.T) {
 	ctx := context.Background()
 	truncateBooks(ctx, t)
 
@@ -68,7 +68,7 @@ func TestBookQueryRepository_FindAll_ReturnsInsertedBooks(t *testing.T) {
 		want[entBook.ID.String()] = s
 	}
 
-	repo := NewBookQueryRepository(testClient)
+	repo := NewBookRepository(testClient)
 	got, err := repo.FindAll(ctx)
 	if err != nil {
 		t.Fatalf("FindAll() unexpected error: %v", err)
@@ -82,7 +82,7 @@ func TestBookQueryRepository_FindAll_ReturnsInsertedBooks(t *testing.T) {
 	}
 }
 
-func assertBookMatchesSeed(t *testing.T, got *domain.Book, want map[string]bookSeed) {
+func assertBookMatchesSeed(t *testing.T, got *model.Book, want map[string]bookSeed) {
 	t.Helper()
 
 	id := got.ID.String()
@@ -111,7 +111,7 @@ func assertBookMatchesSeed(t *testing.T, got *domain.Book, want map[string]bookS
 	}
 }
 
-func authorStrings(a domain.Authors) []string {
+func authorStrings(a model.Authors) []string {
 	values := a.Values()
 	out := make([]string, len(values))
 	for i, v := range values {
@@ -120,7 +120,7 @@ func authorStrings(a domain.Authors) []string {
 	return out
 }
 
-func subtitleString(s *domain.BookSubtitle) string {
+func subtitleString(s *model.BookSubtitle) string {
 	if s == nil {
 		return ""
 	}
@@ -134,7 +134,7 @@ func derefString(s *string) string {
 	return *s
 }
 
-func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
+func TestBookRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
@@ -154,7 +154,7 @@ func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 					t.Fatalf("seed insert: %v", err)
 				}
 			},
-			wantErr: domain.ErrAuthorsRequired,
+			wantErr: model.ErrAuthorsRequired,
 		},
 		{
 			name: "authorsに空文字を含むレコード",
@@ -168,7 +168,7 @@ func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 					t.Fatalf("seed insert: %v", err)
 				}
 			},
-			wantErr: domain.ErrAuthorEmpty,
+			wantErr: model.ErrAuthorEmpty,
 		},
 		{
 			name: "subtitleが空文字のレコード",
@@ -183,7 +183,7 @@ func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 					t.Fatalf("seed insert: %v", err)
 				}
 			},
-			wantErr: domain.ErrBookSubtitleEmpty,
+			wantErr: model.ErrBookSubtitleEmpty,
 		},
 	}
 
@@ -192,7 +192,7 @@ func TestBookQueryRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 			truncateBooks(ctx, t)
 			tt.seed(t)
 
-			repo := NewBookQueryRepository(testClient)
+			repo := NewBookRepository(testClient)
 			_, err := repo.FindAll(ctx)
 			if err == nil {
 				t.Fatalf("FindAll() error = nil, want %v", tt.wantErr)

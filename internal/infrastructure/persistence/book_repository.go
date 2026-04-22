@@ -1,29 +1,27 @@
-package repository
+package persistence
 
 import (
 	"context"
 	"fmt"
 
-	"helloworld/internal/domain"
+	"helloworld/internal/domain/model"
 	"helloworld/internal/infrastructure/ent"
 )
 
-var _ domain.BookQueryRepositorier = (*BookQueryRepository)(nil)
-
-type BookQueryRepository struct {
+type BookRepository struct {
 	client *ent.Client
 }
 
-func NewBookQueryRepository(client *ent.Client) *BookQueryRepository {
-	return &BookQueryRepository{client: client}
+func NewBookRepository(client *ent.Client) *BookRepository {
+	return &BookRepository{client: client}
 }
 
-func (r *BookQueryRepository) FindAll(ctx context.Context) ([]*domain.Book, error) {
+func (r *BookRepository) FindAll(ctx context.Context) ([]*model.Book, error) {
 	rows, err := r.client.Book.Query().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("query all books: %w", err)
 	}
-	books := make([]*domain.Book, 0, len(rows))
+	books := make([]*model.Book, 0, len(rows))
 	for _, row := range rows {
 		b, err := toDomainBook(row)
 		if err != nil {
@@ -34,28 +32,28 @@ func (r *BookQueryRepository) FindAll(ctx context.Context) ([]*domain.Book, erro
 	return books, nil
 }
 
-func toDomainBook(row *ent.Book) (*domain.Book, error) {
-	id, err := domain.NewBookID(row.ID.String())
+func toDomainBook(row *ent.Book) (*model.Book, error) {
+	id, err := model.NewBookID(row.ID.String())
 	if err != nil {
 		return nil, fmt.Errorf("book id (value=%q): %w", row.ID, err)
 	}
-	googleBooksID, err := domain.NewGoogleBooksID(row.GoogleBooksID)
+	googleBooksID, err := model.NewGoogleBooksID(row.GoogleBooksID)
 	if err != nil {
 		return nil, fmt.Errorf("google books id (id=%s, value=%q): %w", row.ID, row.GoogleBooksID, err)
 	}
-	title, err := domain.NewBookTitle(row.Title)
+	title, err := model.NewBookTitle(row.Title)
 	if err != nil {
 		return nil, fmt.Errorf("book title (id=%s, value=%q): %w", row.ID, row.Title, err)
 	}
-	subtitle, err := domain.NewBookSubtitle(row.Subtitle)
+	subtitle, err := model.NewBookSubtitle(row.Subtitle)
 	if err != nil {
 		return nil, fmt.Errorf("book subtitle (id=%s, value=%s): %w", row.ID, formatNillableString(row.Subtitle), err)
 	}
-	authors, err := domain.NewAuthors(row.Authors)
+	authors, err := model.NewAuthors(row.Authors)
 	if err != nil {
 		return nil, fmt.Errorf("book authors (id=%s, value=%q): %w", row.ID, row.Authors, err)
 	}
-	return domain.NewBook(id, googleBooksID, title, subtitle, authors, row.CreatedAt, row.UpdatedAt), nil
+	return model.NewBook(id, googleBooksID, title, subtitle, authors, row.CreatedAt, row.UpdatedAt), nil
 }
 
 func formatNillableString(v *string) string {
