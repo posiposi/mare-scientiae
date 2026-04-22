@@ -36,11 +36,7 @@ func (r *BookRepository) FindAll(ctx context.Context) ([]*model.Book, error) {
 }
 
 func (r *BookRepository) FindByID(ctx context.Context, id model.BookID) (*model.Book, error) {
-	u, err := uuid.Parse(id.String())
-	if err != nil {
-		return nil, fmt.Errorf("parse book id (value=%q): %w", id.String(), err)
-	}
-	row, err := r.client.Book.Get(ctx, u)
+	row, err := r.client.Book.Get(ctx, uuid.MustParse(id.String()))
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, fmt.Errorf("find book (id=%s): %w", id.String(), repository.ErrBookNotFound)
