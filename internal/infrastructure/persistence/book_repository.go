@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"helloworld/internal/domain/model"
+	"helloworld/internal/domain/repository"
 	"helloworld/internal/infrastructure/ent"
 )
 
@@ -30,6 +33,17 @@ func (r *BookRepository) FindAll(ctx context.Context) ([]*model.Book, error) {
 		books = append(books, b)
 	}
 	return books, nil
+}
+
+func (r *BookRepository) FindByID(ctx context.Context, id model.BookID) (*model.Book, error) {
+	row, err := r.client.Book.Get(ctx, uuid.MustParse(id.String()))
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, fmt.Errorf("find book (id=%s): %w", id.String(), repository.ErrBookNotFound)
+		}
+		return nil, fmt.Errorf("query book (id=%s): %w", id.String(), err)
+	}
+	return toDomainBook(row)
 }
 
 func toDomainBook(row *ent.Book) (*model.Book, error) {

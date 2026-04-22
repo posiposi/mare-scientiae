@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"helloworld/internal/domain/model"
+	"helloworld/internal/domain/repository"
 	"helloworld/internal/presentation/dto"
 	"helloworld/internal/presentation/handler"
 )
@@ -60,7 +61,7 @@ func TestBookHandler_ListBooks_Returns200WithBooksJSON(t *testing.T) {
 	book := buildBook(t, "11111111-1111-4111-8111-111111111111", "gbid-001", "DDD", &subtitle, []string{"Eric Evans"}, createdAt, updatedAt)
 
 	uc := &fakeListBooksUsecase{books: []*model.Book{book}}
-	h := handler.NewBookHandler(uc)
+	h := handler.NewBookHandler(uc, &fakeGetBookUsecase{})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/books", nil)
@@ -97,7 +98,7 @@ func TestBookHandler_ListBooks_Returns200WithBooksJSON(t *testing.T) {
 
 func TestBookHandler_ListBooks_ReturnsEmptyArrayWhenNoBooks(t *testing.T) {
 	uc := &fakeListBooksUsecase{books: []*model.Book{}}
-	h := handler.NewBookHandler(uc)
+	h := handler.NewBookHandler(uc, &fakeGetBookUsecase{})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/books", nil)
@@ -113,11 +114,110 @@ func TestBookHandler_ListBooks_ReturnsEmptyArrayWhenNoBooks(t *testing.T) {
 
 func TestBookHandler_ListBooks_Returns500WhenUsecaseFails(t *testing.T) {
 	uc := &fakeListBooksUsecase{err: errors.New("boom")}
-	h := handler.NewBookHandler(uc)
+	h := handler.NewBookHandler(uc, &fakeGetBookUsecase{})
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/books", nil)
 	h.ListBooks(rec, req)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+	if got := rec.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", got, "application/json")
+	}
+}
+
+type fakeGetBookUsecase struct {
+	book *model.Book
+	err  error
+}
+
+func (f *fakeGetBookUsecase) Execute(_ context.Context, _ model.BookID) (*model.Book, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.book, nil
+}
+
+func newGetBookRequest(id string) *http.Request {
+	req := httptest.NewRequest(http.MethodGet, "/v1/books/"+id, nil)
+	req.SetPathValue("id", id)
+	return req
+}
+
+func TestBookHandler_GetBook_Returns200WithBookJSON(t *testing.T) {
+	createdAt := time.Date(2026, 4, 20, 10, 0, 0, 0, time.UTC)
+	updatedAt := time.Date(2026, 4, 21, 11, 0, 0, 0, time.UTC)
+	subtitle := "Tackling Complexity"
+	book := buildBook(t, "11111111-1111-4111-8111-111111111111", "gbid-001", "DDD", &subtitle, []string{"Eric Evans"}, createdAt, updatedAt)
+
+	getUC := &fakeGetBookUsecase{book: book}
+	h := handler.NewBookHandler(&fakeListBooksUsecase{}, getUC)
+
+	rec := httptest.NewRecorder()
+	h.GetBook(rec, newGetBookRequest("11111111-1111-4111-8111-111111111111"))
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+	if got := rec.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", got, "application/json")
+	}
+
+	var got dto.BookResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("json.Unmarshal: %v", err)
+	}
+	want := dto.BookResponse{
+		ID:            "11111111-1111-4111-8111-111111111111",
+		GoogleBooksID: "gbid-001",
+		Title:         "DDD",
+		Subtitle:      &subtitle,
+		Authors:       []string{"Eric Evans"},
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+	}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("body mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestBookHandler_GetBook_Returns400WhenIDIsInvalid(t *testing.T) {
+	h := handler.NewBookHandler(&fakeListBooksUsecase{}, &fakeGetBookUsecase{})
+
+	rec := httptest.NewRecorder()
+	h.GetBook(rec, newGetBookRequest("not-a-uuid"))
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusBadRequest)
+	}
+	if got := rec.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", got, "application/json")
+	}
+}
+
+func TestBookHandler_GetBook_Returns404WhenNotFound(t *testing.T) {
+	getUC := &fakeGetBookUsecase{err: repository.ErrBookNotFound}
+	h := handler.NewBookHandler(&fakeListBooksUsecase{}, getUC)
+
+	rec := httptest.NewRecorder()
+	h.GetBook(rec, newGetBookRequest("22222222-2222-4222-8222-222222222222"))
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+	if got := rec.Header().Get("Content-Type"); got != "application/json" {
+		t.Errorf("Content-Type = %q, want %q", got, "application/json")
+	}
+}
+
+func TestBookHandler_GetBook_Returns500WhenUsecaseFails(t *testing.T) {
+	getUC := &fakeGetBookUsecase{err: errors.New("boom")}
+	h := handler.NewBookHandler(&fakeListBooksUsecase{}, getUC)
+
+	rec := httptest.NewRecorder()
+	h.GetBook(rec, newGetBookRequest("33333333-3333-4333-8333-333333333333"))
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("status = %d, want %d", rec.Code, http.StatusInternalServerError)

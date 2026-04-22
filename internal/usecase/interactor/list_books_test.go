@@ -24,6 +24,10 @@ func (f *fakeBookQueryRepository) FindAll(_ context.Context) ([]*model.Book, err
 	return f.books, nil
 }
 
+func (f *fakeBookQueryRepository) FindByID(_ context.Context, _ model.BookID) (*model.Book, error) {
+	return nil, nil
+}
+
 func newSampleBook(t *testing.T) *model.Book {
 	t.Helper()
 	id, err := model.NewBookID("11111111-1111-4111-8111-111111111111")
