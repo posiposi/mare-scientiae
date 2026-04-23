@@ -9,23 +9,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type Book struct {
+type Author struct {
 	ent.Schema
 }
 
-func (Book) Fields() []ent.Field {
+func (Author) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
 			Default(uuid.New),
-		field.String("google_books_id").
-			MaxLen(50).
+		field.String("name").
+			MaxLen(255).
 			Unique(),
-		field.String("title").
-			MaxLen(500),
-		field.String("subtitle").
-			MaxLen(500).
-			Optional().
-			Nillable(),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -35,8 +29,8 @@ func (Book) Fields() []ent.Field {
 	}
 }
 
-func (Book) Edges() []ent.Edge {
+func (Author) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("authors", Author.Type),
+		edge.From("books", Book.Type).Ref("authors"),
 	}
 }

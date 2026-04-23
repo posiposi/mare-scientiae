@@ -18,53 +18,53 @@ import (
 	"github.com/google/uuid"
 )
 
-// BookQuery is the builder for querying Book entities.
-type BookQuery struct {
+// AuthorQuery is the builder for querying Author entities.
+type AuthorQuery struct {
 	config
-	ctx         *QueryContext
-	order       []book.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Book
-	withAuthors *AuthorQuery
+	ctx        *QueryContext
+	order      []author.OrderOption
+	inters     []Interceptor
+	predicates []predicate.Author
+	withBooks  *BookQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the BookQuery builder.
-func (_q *BookQuery) Where(ps ...predicate.Book) *BookQuery {
+// Where adds a new predicate for the AuthorQuery builder.
+func (_q *AuthorQuery) Where(ps ...predicate.Author) *AuthorQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *BookQuery) Limit(limit int) *BookQuery {
+func (_q *AuthorQuery) Limit(limit int) *AuthorQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *BookQuery) Offset(offset int) *BookQuery {
+func (_q *AuthorQuery) Offset(offset int) *AuthorQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *BookQuery) Unique(unique bool) *BookQuery {
+func (_q *AuthorQuery) Unique(unique bool) *AuthorQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *BookQuery) Order(o ...book.OrderOption) *BookQuery {
+func (_q *AuthorQuery) Order(o ...author.OrderOption) *AuthorQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryAuthors chains the current query on the "authors" edge.
-func (_q *BookQuery) QueryAuthors() *AuthorQuery {
-	query := (&AuthorClient{config: _q.config}).Query()
+// QueryBooks chains the current query on the "books" edge.
+func (_q *AuthorQuery) QueryBooks() *BookQuery {
+	query := (&BookClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -74,9 +74,9 @@ func (_q *BookQuery) QueryAuthors() *AuthorQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(book.Table, book.FieldID, selector),
-			sqlgraph.To(author.Table, author.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, book.AuthorsTable, book.AuthorsPrimaryKey...),
+			sqlgraph.From(author.Table, author.FieldID, selector),
+			sqlgraph.To(book.Table, book.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, author.BooksTable, author.BooksPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -84,21 +84,21 @@ func (_q *BookQuery) QueryAuthors() *AuthorQuery {
 	return query
 }
 
-// First returns the first Book entity from the query.
-// Returns a *NotFoundError when no Book was found.
-func (_q *BookQuery) First(ctx context.Context) (*Book, error) {
+// First returns the first Author entity from the query.
+// Returns a *NotFoundError when no Author was found.
+func (_q *AuthorQuery) First(ctx context.Context) (*Author, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{book.Label}
+		return nil, &NotFoundError{author.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *BookQuery) FirstX(ctx context.Context) *Book {
+func (_q *AuthorQuery) FirstX(ctx context.Context) *Author {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -106,22 +106,22 @@ func (_q *BookQuery) FirstX(ctx context.Context) *Book {
 	return node
 }
 
-// FirstID returns the first Book ID from the query.
-// Returns a *NotFoundError when no Book ID was found.
-func (_q *BookQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first Author ID from the query.
+// Returns a *NotFoundError when no Author ID was found.
+func (_q *AuthorQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{book.Label}
+		err = &NotFoundError{author.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *BookQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *AuthorQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -129,10 +129,10 @@ func (_q *BookQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Book entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Book entity is found.
-// Returns a *NotFoundError when no Book entities are found.
-func (_q *BookQuery) Only(ctx context.Context) (*Book, error) {
+// Only returns a single Author entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Author entity is found.
+// Returns a *NotFoundError when no Author entities are found.
+func (_q *AuthorQuery) Only(ctx context.Context) (*Author, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -141,14 +141,14 @@ func (_q *BookQuery) Only(ctx context.Context) (*Book, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{book.Label}
+		return nil, &NotFoundError{author.Label}
 	default:
-		return nil, &NotSingularError{book.Label}
+		return nil, &NotSingularError{author.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *BookQuery) OnlyX(ctx context.Context) *Book {
+func (_q *AuthorQuery) OnlyX(ctx context.Context) *Author {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -156,10 +156,10 @@ func (_q *BookQuery) OnlyX(ctx context.Context) *Book {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Book ID in the query.
-// Returns a *NotSingularError when more than one Book ID is found.
+// OnlyID is like Only, but returns the only Author ID in the query.
+// Returns a *NotSingularError when more than one Author ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *BookQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *AuthorQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -168,15 +168,15 @@ func (_q *BookQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{book.Label}
+		err = &NotFoundError{author.Label}
 	default:
-		err = &NotSingularError{book.Label}
+		err = &NotSingularError{author.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *BookQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *AuthorQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -184,18 +184,18 @@ func (_q *BookQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Books.
-func (_q *BookQuery) All(ctx context.Context) ([]*Book, error) {
+// All executes the query and returns a list of Authors.
+func (_q *AuthorQuery) All(ctx context.Context) ([]*Author, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Book, *BookQuery]()
-	return withInterceptors[[]*Book](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Author, *AuthorQuery]()
+	return withInterceptors[[]*Author](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *BookQuery) AllX(ctx context.Context) []*Book {
+func (_q *AuthorQuery) AllX(ctx context.Context) []*Author {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -203,20 +203,20 @@ func (_q *BookQuery) AllX(ctx context.Context) []*Book {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Book IDs.
-func (_q *BookQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of Author IDs.
+func (_q *AuthorQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(book.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(author.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *BookQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *AuthorQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -225,16 +225,16 @@ func (_q *BookQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *BookQuery) Count(ctx context.Context) (int, error) {
+func (_q *AuthorQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*BookQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*AuthorQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *BookQuery) CountX(ctx context.Context) int {
+func (_q *AuthorQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -243,7 +243,7 @@ func (_q *BookQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *BookQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *AuthorQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -256,7 +256,7 @@ func (_q *BookQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *BookQuery) ExistX(ctx context.Context) bool {
+func (_q *AuthorQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -264,33 +264,33 @@ func (_q *BookQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the BookQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the AuthorQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *BookQuery) Clone() *BookQuery {
+func (_q *AuthorQuery) Clone() *AuthorQuery {
 	if _q == nil {
 		return nil
 	}
-	return &BookQuery{
-		config:      _q.config,
-		ctx:         _q.ctx.Clone(),
-		order:       append([]book.OrderOption{}, _q.order...),
-		inters:      append([]Interceptor{}, _q.inters...),
-		predicates:  append([]predicate.Book{}, _q.predicates...),
-		withAuthors: _q.withAuthors.Clone(),
+	return &AuthorQuery{
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]author.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.Author{}, _q.predicates...),
+		withBooks:  _q.withBooks.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithAuthors tells the query-builder to eager-load the nodes that are connected to
-// the "authors" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *BookQuery) WithAuthors(opts ...func(*AuthorQuery)) *BookQuery {
-	query := (&AuthorClient{config: _q.config}).Query()
+// WithBooks tells the query-builder to eager-load the nodes that are connected to
+// the "books" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *AuthorQuery) WithBooks(opts ...func(*BookQuery)) *AuthorQuery {
+	query := (&BookClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withAuthors = query
+	_q.withBooks = query
 	return _q
 }
 
@@ -300,19 +300,19 @@ func (_q *BookQuery) WithAuthors(opts ...func(*AuthorQuery)) *BookQuery {
 // Example:
 //
 //	var v []struct {
-//		GoogleBooksID string `json:"google_books_id,omitempty"`
+//		Name string `json:"name,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Book.Query().
-//		GroupBy(book.FieldGoogleBooksID).
+//	client.Author.Query().
+//		GroupBy(author.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *BookQuery) GroupBy(field string, fields ...string) *BookGroupBy {
+func (_q *AuthorQuery) GroupBy(field string, fields ...string) *AuthorGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &BookGroupBy{build: _q}
+	grbuild := &AuthorGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = book.Label
+	grbuild.label = author.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -323,26 +323,26 @@ func (_q *BookQuery) GroupBy(field string, fields ...string) *BookGroupBy {
 // Example:
 //
 //	var v []struct {
-//		GoogleBooksID string `json:"google_books_id,omitempty"`
+//		Name string `json:"name,omitempty"`
 //	}
 //
-//	client.Book.Query().
-//		Select(book.FieldGoogleBooksID).
+//	client.Author.Query().
+//		Select(author.FieldName).
 //		Scan(ctx, &v)
-func (_q *BookQuery) Select(fields ...string) *BookSelect {
+func (_q *AuthorQuery) Select(fields ...string) *AuthorSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &BookSelect{BookQuery: _q}
-	sbuild.label = book.Label
+	sbuild := &AuthorSelect{AuthorQuery: _q}
+	sbuild.label = author.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a BookSelect configured with the given aggregations.
-func (_q *BookQuery) Aggregate(fns ...AggregateFunc) *BookSelect {
+// Aggregate returns a AuthorSelect configured with the given aggregations.
+func (_q *AuthorQuery) Aggregate(fns ...AggregateFunc) *AuthorSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *BookQuery) prepareQuery(ctx context.Context) error {
+func (_q *AuthorQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -354,7 +354,7 @@ func (_q *BookQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !book.ValidColumn(f) {
+		if !author.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -368,19 +368,19 @@ func (_q *BookQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *BookQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Book, error) {
+func (_q *AuthorQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Author, error) {
 	var (
-		nodes       = []*Book{}
+		nodes       = []*Author{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withAuthors != nil,
+			_q.withBooks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Book).scanValues(nil, columns)
+		return (*Author).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Book{config: _q.config}
+		node := &Author{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -394,20 +394,20 @@ func (_q *BookQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Book, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withAuthors; query != nil {
-		if err := _q.loadAuthors(ctx, query, nodes,
-			func(n *Book) { n.Edges.Authors = []*Author{} },
-			func(n *Book, e *Author) { n.Edges.Authors = append(n.Edges.Authors, e) }); err != nil {
+	if query := _q.withBooks; query != nil {
+		if err := _q.loadBooks(ctx, query, nodes,
+			func(n *Author) { n.Edges.Books = []*Book{} },
+			func(n *Author, e *Book) { n.Edges.Books = append(n.Edges.Books, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *BookQuery) loadAuthors(ctx context.Context, query *AuthorQuery, nodes []*Book, init func(*Book), assign func(*Book, *Author)) error {
+func (_q *AuthorQuery) loadBooks(ctx context.Context, query *BookQuery, nodes []*Author, init func(*Author), assign func(*Author, *Book)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[uuid.UUID]*Book)
-	nids := make(map[uuid.UUID]map[*Book]struct{})
+	byID := make(map[uuid.UUID]*Author)
+	nids := make(map[uuid.UUID]map[*Author]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -416,11 +416,11 @@ func (_q *BookQuery) loadAuthors(ctx context.Context, query *AuthorQuery, nodes 
 		}
 	}
 	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(book.AuthorsTable)
-		s.Join(joinT).On(s.C(author.FieldID), joinT.C(book.AuthorsPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(book.AuthorsPrimaryKey[0]), edgeIDs...))
+		joinT := sql.Table(author.BooksTable)
+		s.Join(joinT).On(s.C(book.FieldID), joinT.C(author.BooksPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(author.BooksPrimaryKey[1]), edgeIDs...))
 		columns := s.SelectedColumns()
-		s.Select(joinT.C(book.AuthorsPrimaryKey[0]))
+		s.Select(joinT.C(author.BooksPrimaryKey[1]))
 		s.AppendSelect(columns...)
 		s.SetDistinct(false)
 	})
@@ -442,7 +442,7 @@ func (_q *BookQuery) loadAuthors(ctx context.Context, query *AuthorQuery, nodes 
 				outValue := *values[0].(*uuid.UUID)
 				inValue := *values[1].(*uuid.UUID)
 				if nids[inValue] == nil {
-					nids[inValue] = map[*Book]struct{}{byID[outValue]: {}}
+					nids[inValue] = map[*Author]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
 				}
 				nids[inValue][byID[outValue]] = struct{}{}
@@ -450,14 +450,14 @@ func (_q *BookQuery) loadAuthors(ctx context.Context, query *AuthorQuery, nodes 
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*Author](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*Book](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
 		nodes, ok := nids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected "authors" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected "books" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)
@@ -466,7 +466,7 @@ func (_q *BookQuery) loadAuthors(ctx context.Context, query *AuthorQuery, nodes 
 	return nil
 }
 
-func (_q *BookQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *AuthorQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -475,8 +475,8 @@ func (_q *BookQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *BookQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(book.Table, book.Columns, sqlgraph.NewFieldSpec(book.FieldID, field.TypeUUID))
+func (_q *AuthorQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(author.Table, author.Columns, sqlgraph.NewFieldSpec(author.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -485,9 +485,9 @@ func (_q *BookQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, book.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, author.FieldID)
 		for i := range fields {
-			if fields[i] != book.FieldID {
+			if fields[i] != author.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -515,12 +515,12 @@ func (_q *BookQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *BookQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *AuthorQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(book.Table)
+	t1 := builder.Table(author.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = book.Columns
+		columns = author.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -547,28 +547,28 @@ func (_q *BookQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// BookGroupBy is the group-by builder for Book entities.
-type BookGroupBy struct {
+// AuthorGroupBy is the group-by builder for Author entities.
+type AuthorGroupBy struct {
 	selector
-	build *BookQuery
+	build *AuthorQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *BookGroupBy) Aggregate(fns ...AggregateFunc) *BookGroupBy {
+func (_g *AuthorGroupBy) Aggregate(fns ...AggregateFunc) *AuthorGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *BookGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *AuthorGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*BookQuery, *BookGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*AuthorQuery, *AuthorGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *BookGroupBy) sqlScan(ctx context.Context, root *BookQuery, v any) error {
+func (_g *AuthorGroupBy) sqlScan(ctx context.Context, root *AuthorQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -595,28 +595,28 @@ func (_g *BookGroupBy) sqlScan(ctx context.Context, root *BookQuery, v any) erro
 	return sql.ScanSlice(rows, v)
 }
 
-// BookSelect is the builder for selecting fields of Book entities.
-type BookSelect struct {
-	*BookQuery
+// AuthorSelect is the builder for selecting fields of Author entities.
+type AuthorSelect struct {
+	*AuthorQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *BookSelect) Aggregate(fns ...AggregateFunc) *BookSelect {
+func (_s *AuthorSelect) Aggregate(fns ...AggregateFunc) *AuthorSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *BookSelect) Scan(ctx context.Context, v any) error {
+func (_s *AuthorSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*BookQuery, *BookSelect](ctx, _s.BookQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*AuthorQuery, *AuthorSelect](ctx, _s.AuthorQuery, _s, _s.inters, v)
 }
 
-func (_s *BookSelect) sqlScan(ctx context.Context, root *BookQuery, v any) error {
+func (_s *AuthorSelect) sqlScan(ctx context.Context, root *AuthorQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

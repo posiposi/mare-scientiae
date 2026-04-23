@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/schema"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"helloworld/internal/infrastructure/ent"
@@ -44,7 +45,7 @@ func runTestMain(m *testing.M) (int, error) {
 	testClient = ent.NewClient(ent.Driver(entsql.OpenDB(dialect.Postgres, db)))
 	defer testClient.Close()
 
-	if err := testClient.Schema.Create(context.Background()); err != nil {
+	if err := testClient.Schema.Create(context.Background(), schema.WithDropColumn(true)); err != nil {
 		return 0, fmt.Errorf("schema create: %w", err)
 	}
 
@@ -55,5 +56,8 @@ func truncateBooks(ctx context.Context, t *testing.T) {
 	t.Helper()
 	if _, err := testClient.Book.Delete().Exec(ctx); err != nil {
 		t.Fatalf("truncate books: %v", err)
+	}
+	if _, err := testClient.Author.Delete().Exec(ctx); err != nil {
+		t.Fatalf("truncate authors: %v", err)
 	}
 }
