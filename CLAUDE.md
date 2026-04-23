@@ -77,6 +77,16 @@ docker-compose で以下の3サービスを構成する。
 | db       | postgres:18.3    | 開発用データベース                |
 | test-db  | postgres:18.3    | テスト用データベース（TDDで使用） |
 
+## ホットリロード（air）
+
+`api` サービスは [air](https://github.com/air-verse/air) によるホットリロードで起動する。`./` 配下の `.go` ファイル変更を検知して自動で再ビルド・再起動する。
+
+- 設定: `.air.toml`（ビルドコマンドは `go build -o ./tmp/main ./cmd/server`）
+- 監視除外: `tmp`、`.git`、`.claude`、`schemas`、`docs`、`*_test.go`
+- 一時ファイル: `tmp/main`（バイナリ）、`build-errors.log`（ビルド失敗ログ）。いずれも `.gitignore` 済み
+
+ビルド失敗時は `build-errors.log` または `docker compose logs api` で確認する。
+
 ## スキーマ管理
 
 [Ent](https://entgo.io) の宣言的スキーマを採用。スキーマはGoコードとして `internal/infrastructure/ent/schema/` に定義し、`go generate` でクライアントコードを生成する。マイグレーションは Ent の [auto-migration](https://entgo.io/docs/migrate#auto-migration) を `cmd/ent` の手動CLIから実行する。将来的にテーブル数が増えた段階で Atlas versioned migrations に移行する。
