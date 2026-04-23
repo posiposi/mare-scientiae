@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/schema"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog/log"
 
@@ -40,7 +41,7 @@ func run(ctx context.Context) error {
 	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.Postgres, db)))
 	defer client.Close()
 
-	if err := client.Schema.Create(ctx); err != nil {
+	if err := client.Schema.Create(ctx, schema.WithDropColumn(true)); err != nil {
 		return fmt.Errorf("schema create: %w", err)
 	}
 	return nil
