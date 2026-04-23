@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"helloworld/internal/infrastructure/ent/author"
 	"helloworld/internal/infrastructure/ent/book"
 	"helloworld/internal/infrastructure/ent/schema"
 	"time"
@@ -14,6 +15,26 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	authorFields := schema.Author{}.Fields()
+	_ = authorFields
+	// authorDescName is the schema descriptor for name field.
+	authorDescName := authorFields[1].Descriptor()
+	// author.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	author.NameValidator = authorDescName.Validators[0].(func(string) error)
+	// authorDescCreatedAt is the schema descriptor for created_at field.
+	authorDescCreatedAt := authorFields[2].Descriptor()
+	// author.DefaultCreatedAt holds the default value on creation for the created_at field.
+	author.DefaultCreatedAt = authorDescCreatedAt.Default.(func() time.Time)
+	// authorDescUpdatedAt is the schema descriptor for updated_at field.
+	authorDescUpdatedAt := authorFields[3].Descriptor()
+	// author.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	author.DefaultUpdatedAt = authorDescUpdatedAt.Default.(func() time.Time)
+	// author.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	author.UpdateDefaultUpdatedAt = authorDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// authorDescID is the schema descriptor for id field.
+	authorDescID := authorFields[0].Descriptor()
+	// author.DefaultID holds the default value on creation for the id field.
+	author.DefaultID = authorDescID.Default.(func() uuid.UUID)
 	bookFields := schema.Book{}.Fields()
 	_ = bookFields
 	// bookDescGoogleBooksID is the schema descriptor for google_books_id field.

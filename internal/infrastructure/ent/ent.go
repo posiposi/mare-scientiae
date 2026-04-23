@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"helloworld/internal/infrastructure/ent/author"
 	"helloworld/internal/infrastructure/ent/book"
 	"reflect"
 	"sync"
@@ -73,7 +74,8 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			book.Table: book.ValidColumn,
+			author.Table: author.ValidColumn,
+			book.Table:   book.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

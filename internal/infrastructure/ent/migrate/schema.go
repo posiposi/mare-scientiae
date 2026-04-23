@@ -8,6 +8,19 @@ import (
 )
 
 var (
+	// AuthorsColumns holds the columns for the "authors" table.
+	AuthorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 255},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// AuthorsTable holds the schema information for the "authors" table.
+	AuthorsTable = &schema.Table{
+		Name:       "authors",
+		Columns:    AuthorsColumns,
+		PrimaryKey: []*schema.Column{AuthorsColumns[0]},
+	}
 	// BooksColumns holds the columns for the "books" table.
 	BooksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -26,6 +39,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AuthorsTable,
 		BooksTable,
 	}
 )
