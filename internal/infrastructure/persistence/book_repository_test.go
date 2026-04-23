@@ -10,6 +10,8 @@ import (
 
 	"helloworld/internal/domain/model"
 	"helloworld/internal/domain/repository"
+	"helloworld/internal/infrastructure/ent"
+	"helloworld/internal/infrastructure/ent/author"
 )
 
 func TestBookRepository_FindAll_Empty(t *testing.T) {
@@ -55,10 +57,11 @@ func TestBookRepository_FindAll_ReturnsInsertedBooks(t *testing.T) {
 
 	want := make(map[string]bookSeed, len(seeds))
 	for _, s := range seeds {
+		authorEntities := ensureAuthors(ctx, t, s.authors)
 		create := testClient.Book.Create().
 			SetGoogleBooksID(s.googleBooksID).
 			SetTitle(s.title).
-			SetAuthors(s.authors)
+			AddAuthors(authorEntities...)
 		if s.subtitle != nil {
 			create = create.SetSubtitle(*s.subtitle)
 		}
@@ -140,11 +143,12 @@ func TestBookRepository_FindByID_ReturnsInsertedBook(t *testing.T) {
 	truncateBooks(ctx, t)
 
 	subtitle := "Tackling Complexity in the Heart of Software"
+	authorEntities := ensureAuthors(ctx, t, []string{"Eric Evans"})
 	entBook, err := testClient.Book.Create().
 		SetGoogleBooksID("gbid-ddd").
 		SetTitle("Domain-Driven Design").
 		SetSubtitle(subtitle).
-		SetAuthors([]string{"Eric Evans"}).
+		AddAuthors(authorEntities...).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("seed insert: %v", err)
@@ -198,11 +202,12 @@ func TestBookRepository_FindByID_ErrorOnInvalidPersistedData(t *testing.T) {
 	ctx := context.Background()
 	truncateBooks(ctx, t)
 
+	authorEntities := ensureAuthors(ctx, t, []string{"Author"})
 	entBook, err := testClient.Book.Create().
 		SetGoogleBooksID("gbid-empty-subtitle").
 		SetTitle("Title").
 		SetSubtitle("").
-		SetAuthors([]string{"Author"}).
+		AddAuthors(authorEntities...).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("seed insert: %v", err)
@@ -235,7 +240,6 @@ func TestBookRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 				if _, err := testClient.Book.Create().
 					SetGoogleBooksID("gbid-empty-authors").
 					SetTitle("Title").
-					SetAuthors([]string{}).
 					Save(ctx); err != nil {
 					t.Fatalf("seed insert: %v", err)
 				}
@@ -246,10 +250,11 @@ func TestBookRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 			name: "authorsに空文字を含むレコード",
 			seed: func(t *testing.T) {
 				t.Helper()
+				authorEntities := ensureAuthors(ctx, t, []string{"valid", ""})
 				if _, err := testClient.Book.Create().
 					SetGoogleBooksID("gbid-empty-author-element").
 					SetTitle("Title").
-					SetAuthors([]string{"valid", ""}).
+					AddAuthors(authorEntities...).
 					Save(ctx); err != nil {
 					t.Fatalf("seed insert: %v", err)
 				}
@@ -260,11 +265,12 @@ func TestBookRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 			name: "subtitleが空文字のレコード",
 			seed: func(t *testing.T) {
 				t.Helper()
+				authorEntities := ensureAuthors(ctx, t, []string{"Author"})
 				if _, err := testClient.Book.Create().
 					SetGoogleBooksID("gbid-empty-subtitle").
 					SetTitle("Title").
 					SetSubtitle("").
-					SetAuthors([]string{"Author"}).
+					AddAuthors(authorEntities...).
 					Save(ctx); err != nil {
 					t.Fatalf("seed insert: %v", err)
 				}
@@ -288,4 +294,74 @@ func TestBookRepository_FindAll_ErrorOnInvalidPersistedData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBookRepository_FindAll_SharesAuthorMaster(t *testing.T) {
+	ctx := context.Background()
+	truncateBooks(ctx, t)
+
+	sharedAuthor := "Eric Evans"
+	seeds := []bookSeed{
+		{
+			googleBooksID: "gbid-shared-1",
+			title:         "Book One",
+			authors:       []string{sharedAuthor},
+		},
+		{
+			googleBooksID: "gbid-shared-2",
+			title:         "Book Two",
+			authors:       []string{sharedAuthor},
+		},
+	}
+	for _, s := range seeds {
+		authorEntities := ensureAuthors(ctx, t, s.authors)
+		if _, err := testClient.Book.Create().
+			SetGoogleBooksID(s.googleBooksID).
+			SetTitle(s.title).
+			AddAuthors(authorEntities...).
+			Save(ctx); err != nil {
+			t.Fatalf("seed insert (%s): %v", s.googleBooksID, err)
+		}
+	}
+
+	repo := NewBookRepository(testClient)
+	got, err := repo.FindAll(ctx)
+	if err != nil {
+		t.Fatalf("FindAll() unexpected error: %v", err)
+	}
+	if len(got) != len(seeds) {
+		t.Fatalf("FindAll() len = %d, want %d", len(got), len(seeds))
+	}
+	for _, b := range got {
+		gotAuthors := authorStrings(b.Authors)
+		if diff := cmp.Diff([]string{sharedAuthor}, gotAuthors); diff != "" {
+			t.Errorf("book(%s).Authors mismatch (-want +got):\n%s", b.ID.String(), diff)
+		}
+	}
+
+	count, err := testClient.Author.Query().Count(ctx)
+	if err != nil {
+		t.Fatalf("count authors: %v", err)
+	}
+	if count != 1 {
+		t.Errorf("Author count = %d, want 1 (master should be shared across books)", count)
+	}
+}
+
+func ensureAuthors(ctx context.Context, t *testing.T, names []string) []*ent.Author {
+	t.Helper()
+	authors := make([]*ent.Author, 0, len(names))
+	for _, name := range names {
+		a, err := testClient.Author.Query().
+			Where(author.NameEQ(name)).
+			Only(ctx)
+		if ent.IsNotFound(err) {
+			a, err = testClient.Author.Create().SetName(name).Save(ctx)
+		}
+		if err != nil {
+			t.Fatalf("ensure author %q: %v", name, err)
+		}
+		authors = append(authors, a)
+	}
+	return authors
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -29,5 +30,7 @@ func (Author) Fields() []ent.Field {
 }
 
 func (Author) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.From("books", Book.Type).Ref("authors"),
+	}
 }

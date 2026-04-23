@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -20,8 +21,15 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// EdgeBooks holds the string denoting the books edge name in mutations.
+	EdgeBooks = "books"
 	// Table holds the table name of the author in the database.
 	Table = "authors"
+	// BooksTable is the table that holds the books relation/edge. The primary key declared below.
+	BooksTable = "book_authors"
+	// BooksInverseTable is the table name for the Book entity.
+	// It exists in this package in order to avoid circular dependency with the "book" package.
+	BooksInverseTable = "books"
 )
 
 // Columns holds all SQL columns for author fields.
@@ -31,6 +39,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// BooksPrimaryKey and BooksColumn2 are the table columns denoting the
+	// primary key for the books relation (M2M).
+	BooksPrimaryKey = []string{"book_id", "author_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -76,4 +90,25 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByBooksCount orders the results by books count.
+func ByBooksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBooksStep(), opts...)
+	}
+}
+
+// ByBooks orders the results by books terms.
+func ByBooks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBooksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newBooksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BooksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, BooksTable, BooksPrimaryKey...),
+	)
 }

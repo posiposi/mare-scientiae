@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"helloworld/internal/infrastructure/ent/book"
 	"strings"
@@ -25,13 +24,32 @@ type Book struct {
 	Title string `json:"title,omitempty"`
 	// Subtitle holds the value of the "subtitle" field.
 	Subtitle *string `json:"subtitle,omitempty"`
-	// Authors holds the value of the "authors" field.
-	Authors []string `json:"authors,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the BookQuery when eager-loading is set.
+	Edges        BookEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// BookEdges holds the relations/edges for other nodes in the graph.
+type BookEdges struct {
+	// Authors holds the value of the authors edge.
+	Authors []*Author `json:"authors,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// AuthorsOrErr returns the Authors value or an error if the edge
+// was not loaded in eager-loading.
+func (e BookEdges) AuthorsOrErr() ([]*Author, error) {
+	if e.loadedTypes[0] {
+		return e.Authors, nil
+	}
+	return nil, &NotLoadedError{edge: "authors"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -39,8 +57,6 @@ func (*Book) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case book.FieldAuthors:
-			values[i] = new([]byte)
 		case book.FieldGoogleBooksID, book.FieldTitle, book.FieldSubtitle:
 			values[i] = new(sql.NullString)
 		case book.FieldCreatedAt, book.FieldUpdatedAt:
@@ -87,14 +103,6 @@ func (_m *Book) assignValues(columns []string, values []any) error {
 				_m.Subtitle = new(string)
 				*_m.Subtitle = value.String
 			}
-		case book.FieldAuthors:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field authors", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.Authors); err != nil {
-					return fmt.Errorf("unmarshal field authors: %w", err)
-				}
-			}
 		case book.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -118,6 +126,11 @@ func (_m *Book) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Book) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryAuthors queries the "authors" edge of the Book entity.
+func (_m *Book) QueryAuthors() *AuthorQuery {
+	return NewBookClient(_m.config).QueryAuthors(_m)
 }
 
 // Update returns a builder for updating this Book.
@@ -153,9 +166,6 @@ func (_m *Book) String() string {
 		builder.WriteString("subtitle=")
 		builder.WriteString(*v)
 	}
-	builder.WriteString(", ")
-	builder.WriteString("authors=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Authors))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

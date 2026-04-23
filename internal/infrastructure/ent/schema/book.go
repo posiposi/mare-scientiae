@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -25,7 +26,6 @@ func (Book) Fields() []ent.Field {
 			MaxLen(500).
 			Optional().
 			Nillable(),
-		field.JSON("authors", []string{}),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -36,5 +36,7 @@ func (Book) Fields() []ent.Field {
 }
 
 func (Book) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("authors", Author.Type),
+	}
 }

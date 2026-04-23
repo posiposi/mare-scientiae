@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"helloworld/internal/infrastructure/ent/author"
+	"helloworld/internal/infrastructure/ent/book"
 	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -67,6 +68,21 @@ func (_c *AuthorCreate) SetNillableID(v *uuid.UUID) *AuthorCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// AddBookIDs adds the "books" edge to the Book entity by IDs.
+func (_c *AuthorCreate) AddBookIDs(ids ...uuid.UUID) *AuthorCreate {
+	_c.mutation.AddBookIDs(ids...)
+	return _c
+}
+
+// AddBooks adds the "books" edges to the Book entity.
+func (_c *AuthorCreate) AddBooks(v ...*Book) *AuthorCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddBookIDs(ids...)
 }
 
 // Mutation returns the AuthorMutation object of the builder.
@@ -180,6 +196,22 @@ func (_c *AuthorCreate) createSpec() (*Author, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(author.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.BooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   author.BooksTable,
+			Columns: author.BooksPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(book.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

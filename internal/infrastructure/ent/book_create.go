@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"helloworld/internal/infrastructure/ent/author"
 	"helloworld/internal/infrastructure/ent/book"
 	"time"
 
@@ -44,12 +45,6 @@ func (_c *BookCreate) SetNillableSubtitle(v *string) *BookCreate {
 	if v != nil {
 		_c.SetSubtitle(*v)
 	}
-	return _c
-}
-
-// SetAuthors sets the "authors" field.
-func (_c *BookCreate) SetAuthors(v []string) *BookCreate {
-	_c.mutation.SetAuthors(v)
 	return _c
 }
 
@@ -93,6 +88,21 @@ func (_c *BookCreate) SetNillableID(v *uuid.UUID) *BookCreate {
 		_c.SetID(*v)
 	}
 	return _c
+}
+
+// AddAuthorIDs adds the "authors" edge to the Author entity by IDs.
+func (_c *BookCreate) AddAuthorIDs(ids ...uuid.UUID) *BookCreate {
+	_c.mutation.AddAuthorIDs(ids...)
+	return _c
+}
+
+// AddAuthors adds the "authors" edges to the Author entity.
+func (_c *BookCreate) AddAuthors(v ...*Author) *BookCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAuthorIDs(ids...)
 }
 
 // Mutation returns the BookMutation object of the builder.
@@ -167,9 +177,6 @@ func (_c *BookCreate) check() error {
 			return &ValidationError{Name: "subtitle", err: fmt.Errorf(`ent: validator failed for field "Book.subtitle": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.Authors(); !ok {
-		return &ValidationError{Name: "authors", err: errors.New(`ent: missing required field "Book.authors"`)}
-	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Book.created_at"`)}
 	}
@@ -223,10 +230,6 @@ func (_c *BookCreate) createSpec() (*Book, *sqlgraph.CreateSpec) {
 		_spec.SetField(book.FieldSubtitle, field.TypeString, value)
 		_node.Subtitle = &value
 	}
-	if value, ok := _c.mutation.Authors(); ok {
-		_spec.SetField(book.FieldAuthors, field.TypeJSON, value)
-		_node.Authors = value
-	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(book.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -234,6 +237,22 @@ func (_c *BookCreate) createSpec() (*Book, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(book.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.AuthorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   book.AuthorsTable,
+			Columns: book.AuthorsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(author.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

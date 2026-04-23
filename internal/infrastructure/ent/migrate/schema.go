@@ -27,7 +27,6 @@ var (
 		{Name: "google_books_id", Type: field.TypeString, Unique: true, Size: 50},
 		{Name: "title", Type: field.TypeString, Size: 500},
 		{Name: "subtitle", Type: field.TypeString, Nullable: true, Size: 500},
-		{Name: "authors", Type: field.TypeJSON},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -37,12 +36,40 @@ var (
 		Columns:    BooksColumns,
 		PrimaryKey: []*schema.Column{BooksColumns[0]},
 	}
+	// BookAuthorsColumns holds the columns for the "book_authors" table.
+	BookAuthorsColumns = []*schema.Column{
+		{Name: "book_id", Type: field.TypeUUID},
+		{Name: "author_id", Type: field.TypeUUID},
+	}
+	// BookAuthorsTable holds the schema information for the "book_authors" table.
+	BookAuthorsTable = &schema.Table{
+		Name:       "book_authors",
+		Columns:    BookAuthorsColumns,
+		PrimaryKey: []*schema.Column{BookAuthorsColumns[0], BookAuthorsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "book_authors_book_id",
+				Columns:    []*schema.Column{BookAuthorsColumns[0]},
+				RefColumns: []*schema.Column{BooksColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "book_authors_author_id",
+				Columns:    []*schema.Column{BookAuthorsColumns[1]},
+				RefColumns: []*schema.Column{AuthorsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AuthorsTable,
 		BooksTable,
+		BookAuthorsTable,
 	}
 )
 
 func init() {
+	BookAuthorsTable.ForeignKeys[0].RefTable = BooksTable
+	BookAuthorsTable.ForeignKeys[1].RefTable = AuthorsTable
 }
